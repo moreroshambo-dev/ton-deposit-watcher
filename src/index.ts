@@ -1,37 +1,14 @@
-import { loadConfig } from "./config";
-import { loadCursor, saveCursor } from "./cursor-store";
-import { createLiteClientFromConfigUrl, syncIncomingTransfers } from "./ton-deposit-indexer";
+import { runDepositSync } from "./app/run-deposit-sync";
+import { createLogger } from "./shared/logger";
 
-async function main(): Promise<void> {
-  const config = loadConfig();
-  const cursor = await loadCursor(
-    config.cursorPath,
-    config.walletRawAddress,
-    config.network,
-  );
-  const { client, engine } = await createLiteClientFromConfigUrl(config.globalConfigUrl);
+const logger = createLogger();
 
-  try {
-    const result = await syncIncomingTransfers({
-      batchSize: config.batchSize,
-      client,
-      cursor,
-      network: config.network,
-      wallet: config.wallet,
-    });
-
-    await saveCursor(config.cursorPath, result.cursorAfter);
-    console.log(JSON.stringify(result, null, 2));
-  } finally {
-    engine.close();
-  }
-}
-
-main()
-  .then(() => {
+runDepositSync({ logger })
+  .then((result) => {
+    process.stdout.write(`${JSON.stringify(result, null, 2)}\n`);
     process.exit(0);
   })
   .catch((error) => {
-    console.error(error);
+    logger.fatal({ err: error }, "TON deposit sync failed");
     process.exit(1);
   });

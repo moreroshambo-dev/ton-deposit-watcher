@@ -2,14 +2,14 @@ import { Address } from "@ton/core";
 import { resolve } from "node:path";
 import { z } from "zod";
 
-import { type Network, networkSchema } from "./cursor-store";
+import { type Network, networkSchema } from "../domain/cursor/types";
 
 const envSchema = z.object({
-  TON_WALLET_ADDRESS: z.string().min(1, "TON_WALLET_ADDRESS is required"),
-  TON_NETWORK: networkSchema.default("mainnet"),
-  TON_GLOBAL_CONFIG_URL: z.string().url().optional(),
-  TON_CURSOR_PATH: z.string().min(1).optional(),
   TON_BATCH_SIZE: z.coerce.number().int().min(1).max(100).default(50),
+  TON_CURSOR_PATH: z.string().min(1).optional(),
+  TON_GLOBAL_CONFIG_URL: z.string().url().optional(),
+  TON_NETWORK: networkSchema.default("mainnet"),
+  TON_WALLET_ADDRESS: z.string().min(1, "TON_WALLET_ADDRESS is required"),
 });
 
 export type AppConfig = {
