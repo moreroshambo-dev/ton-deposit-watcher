@@ -1,14 +1,13 @@
-import { runDepositSync } from "./app/run-deposit-sync";
+import { watchDepositSync } from "./app/watch-deposit-sync";
 import { createLogger } from "./shared/logger";
 
 const logger = createLogger();
 
-runDepositSync({ logger })
-  .then((result) => {
-    process.stdout.write(`${JSON.stringify(result, null, 2)}\n`);
+watchDepositSync({ logger })
+  .then(() => {
     process.exit(0);
   })
   .catch((error) => {
-    logger.fatal({ err: error }, "TON deposit sync failed");
+    logger.fatal({ err: error }, "TON deposit watcher failed");
     process.exit(1);
   });

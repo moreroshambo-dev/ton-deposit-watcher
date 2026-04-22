@@ -9,6 +9,7 @@ const envSchema = z.object({
   TON_CURSOR_PATH: z.string().min(1).optional(),
   TON_GLOBAL_CONFIG_URL: z.string().url().optional(),
   TON_NETWORK: networkSchema.default("mainnet"),
+  TON_POLL_INTERVAL_MS: z.coerce.number().int().min(1000).default(5000),
   TON_WALLET_ADDRESS: z.string().min(1, "TON_WALLET_ADDRESS is required"),
 });
 
@@ -17,6 +18,7 @@ export type AppConfig = {
   cursorPath: string;
   globalConfigUrl: string;
   network: Network;
+  pollIntervalMs: number;
   wallet: Address;
   walletFriendlyAddress: string;
   walletRawAddress: string;
@@ -34,6 +36,7 @@ export function loadConfig(env: NodeJS.ProcessEnv = process.env): AppConfig {
     ),
     globalConfigUrl: parsed.TON_GLOBAL_CONFIG_URL ?? defaultGlobalConfigUrl(network),
     network,
+    pollIntervalMs: parsed.TON_POLL_INTERVAL_MS,
     wallet,
     walletFriendlyAddress: wallet.toString({
       bounceable: true,

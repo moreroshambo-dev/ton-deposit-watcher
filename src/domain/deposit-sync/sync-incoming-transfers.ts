@@ -23,7 +23,7 @@ export async function syncIncomingTransfers(
   const accountState = await args.client.getAccountState(args.wallet, masterchainInfo.last);
   const latestTransaction = toLastProcessedTx(accountState.lastTx);
 
-  log.info(
+  log.debug(
     {
       cursorBefore: args.cursor?.lastProcessedTx ?? null,
       latestTransaction,
@@ -39,7 +39,7 @@ export async function syncIncomingTransfers(
       );
     }
 
-    log.info("Wallet has no transactions yet");
+    log.debug("Wallet has no transactions yet");
 
     return {
       cursorAfter: buildCursor({
@@ -58,7 +58,7 @@ export async function syncIncomingTransfers(
   }
 
   if (args.cursor?.lastProcessedTx && isSameCursor(args.cursor.lastProcessedTx, latestTransaction)) {
-    log.info("No new wallet transactions since the saved cursor");
+    log.debug("No new wallet transactions since the saved cursor");
 
     return {
       cursorAfter: buildCursor({
@@ -107,15 +107,21 @@ export async function syncIncomingTransfers(
     walletRawAddress,
   };
 
-  log.info(
-    {
-      incomingTransfers: result.incomingTransfers.length,
-      pagesLoaded: history.pagesLoaded,
-      scannedTransactions: result.scannedTransactions,
-      skippedTransactions: result.scannedTransactions - extractedTransfers.stats.accepted,
-    },
-    "Completed deposit sync",
-  );
+  const hasWalletActivity =
+    result.scannedTransactions > 0 || result.incomingTransfers.length > 0;
+
+  const logFields = {
+    incomingTransfers: result.incomingTransfers.length,
+    pagesLoaded: history.pagesLoaded,
+    scannedTransactions: result.scannedTransactions,
+    skippedTransactions: result.scannedTransactions - extractedTransfers.stats.accepted,
+  };
+
+  if (hasWalletActivity) {
+    log.info(logFields, "Completed deposit sync");
+  } else {
+    log.debug(logFields, "Completed deposit sync");
+  }
 
   return result;
 }

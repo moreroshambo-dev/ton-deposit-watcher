@@ -74,7 +74,7 @@ export async function saveCursor(args: SaveCursorArgs): Promise<void> {
   await mkdir(dirname(args.cursorPath), { recursive: true });
   await writeFile(args.cursorPath, `${JSON.stringify(args.cursor, null, 2)}\n`, "utf8");
 
-  log.info(
+  log.debug(
     {
       lastProcessedBlockSeqno: args.cursor.lastProcessedBlock.seqno,
       lastProcessedTx: args.cursor.lastProcessedTx,
