@@ -2,9 +2,12 @@ import type { Logger } from "pino";
 
 import { loadConfig } from "./config";
 import { writeSyncResultToStdout } from "./stdout-events";
-import { loadCursor, saveCursor } from "../domain/cursor/store";
 import type { SyncCursor } from "../domain/cursor/types";
 import { syncIncomingTransfers } from "../domain/deposit-sync/sync-incoming-transfers";
+import { assertMigratedSchema } from "../infrastructure/db/assert-migrated-schema";
+import { createDatabase } from "../infrastructure/db/client";
+import { loadCursorFromDb } from "../infrastructure/db/cursor-repository";
+import { persistSyncResult } from "../infrastructure/db/persist-sync-result";
 import { createLiteClientFromConfigUrl } from "../infrastructure/ton/lite-client";
 
 type WatchState = {
@@ -27,7 +30,7 @@ export async function watchDepositSync(args: {
   log.info(
     {
       batchSize: config.batchSize,
-      cursorPath: config.cursorPath,
+      ...config.databaseConnectionInfo,
       globalConfigUrl: config.globalConfigUrl,
       pollIntervalMs: config.pollIntervalMs,
       walletFriendlyAddress: config.walletFriendlyAddress,
@@ -35,72 +38,87 @@ export async function watchDepositSync(args: {
     "Starting TON deposit watcher",
   );
 
-  const initialCursor = await loadCursor({
-    cursorPath: config.cursorPath,
-    logger: log,
-    network: config.network,
-    walletRawAddress: config.walletRawAddress,
-  });
-
-  const { client, engine, serverCount } = await createLiteClientFromConfigUrl({
-    globalConfigUrl: config.globalConfigUrl,
+  const { client: dbClient, db } = createDatabase({
+    databaseConnectionInfo: config.databaseConnectionInfo,
+    databaseUrl: config.databaseUrl,
     logger: log,
   });
-
-  log.info({ serverCount }, "TON lite client is ready");
-
-  const state: WatchState = {
-    currentCursor: initialCursor,
-    iteration: 0,
-  };
 
   try {
-    await runSyncIteration({
-      client,
-      config,
-      emitToStdout: true,
-      iterationReason: "startup",
+    await assertMigratedSchema({
+      client: dbClient,
       logger: log,
-      state,
+    });
+    const initialCursor = await loadCursorFromDb({
+      db,
+      logger: log,
+      network: config.network,
+      walletRawAddress: config.walletRawAddress,
+    });
+    const { client, engine, serverCount } = await createLiteClientFromConfigUrl({
+      globalConfigUrl: config.globalConfigUrl,
+      logger: log,
     });
 
-    while (!shutdown.isStopping) {
-      const sleptFully = await waitForNextPoll(config.pollIntervalMs, shutdown);
+    try {
+      log.info({ serverCount }, "TON lite client is ready");
 
-      if (!sleptFully || shutdown.isStopping) {
-        break;
-      }
-
-      const latestMasterchainInfo = await client.getMasterchainInfo();
-      const knownSeqno = state.currentCursor?.lastProcessedBlock.seqno ?? 0;
-      const latestSeqno = latestMasterchainInfo.last.seqno;
-
-      if (latestSeqno <= knownSeqno) {
-        log.debug(
-          {
-            knownSeqno,
-            latestSeqno,
-          },
-          "No new masterchain block since last processed snapshot",
-        );
-        continue;
-      }
+      const state: WatchState = {
+        currentCursor: initialCursor,
+        iteration: 0,
+      };
 
       await runSyncIteration({
         client,
         config,
-        emitToStdout: false,
-        iterationReason: "new_block",
-        logger: log.child({
-          latestMasterchainSeqno: latestSeqno,
-          previousMasterchainSeqno: knownSeqno,
-        }),
+        db,
+        emitToStdout: true,
+        iterationReason: "startup",
+        logger: log,
         state,
       });
+
+      while (!shutdown.isStopping) {
+        const sleptFully = await waitForNextPoll(config.pollIntervalMs, shutdown);
+
+        if (!sleptFully || shutdown.isStopping) {
+          break;
+        }
+
+        const latestMasterchainInfo = await client.getMasterchainInfo();
+        const knownSeqno = state.currentCursor?.lastProcessedBlock.seqno ?? 0;
+        const latestSeqno = latestMasterchainInfo.last.seqno;
+
+        if (latestSeqno <= knownSeqno) {
+          log.debug(
+            {
+              knownSeqno,
+              latestSeqno,
+            },
+            "No new masterchain block since last processed snapshot",
+          );
+          continue;
+        }
+
+        await runSyncIteration({
+          client,
+          config,
+          db,
+          emitToStdout: false,
+          iterationReason: "new_block",
+          logger: log.child({
+            latestMasterchainSeqno: latestSeqno,
+            previousMasterchainSeqno: knownSeqno,
+          }),
+          state,
+        });
+      }
+    } finally {
+      engine.close();
     }
   } finally {
     shutdown.cleanup();
-    engine.close();
+    await dbClient.end({ timeout: 5 });
     log.info("Stopped TON deposit watcher");
   }
 }
@@ -108,6 +126,7 @@ export async function watchDepositSync(args: {
 async function runSyncIteration(args: {
   client: Awaited<ReturnType<typeof createLiteClientFromConfigUrl>>["client"];
   config: ReturnType<typeof loadConfig>;
+  db: ReturnType<typeof createDatabase>["db"];
   emitToStdout: boolean;
   iterationReason: "startup" | "new_block";
   logger: Logger;
@@ -128,10 +147,10 @@ async function runSyncIteration(args: {
     wallet: args.config.wallet,
   });
 
-  await saveCursor({
-    cursor: result.cursorAfter,
-    cursorPath: args.config.cursorPath,
+  await persistSyncResult({
+    db: args.db,
     logger: log,
+    result,
   });
 
   const walletActivityDetected =

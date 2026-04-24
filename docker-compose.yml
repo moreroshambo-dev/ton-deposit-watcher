@@ -1,0 +1,21 @@
+services:
+  postgres:
+    image: postgres:16
+    container_name: ton-deposits-postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: ton_deposits
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_USER: postgres
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres -d ton_deposits"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+
+volumes:
+  postgres_data:
