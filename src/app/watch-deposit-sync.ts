@@ -1,6 +1,7 @@
 import type { Logger } from "pino";
 
 import { loadConfig } from "./config";
+import { runDownstreamDispatchPass } from "./run-downstream-dispatch-pass";
 import { writeSyncResultToStdout } from "./stdout-events";
 import type { SyncCursor } from "../domain/cursor/types";
 import { syncIncomingTransfers } from "../domain/deposit-sync/sync-incoming-transfers";
@@ -77,6 +78,12 @@ export async function watchDepositSync(args: {
         logger: log,
         state,
       });
+      await runDownstreamDispatchPass({
+        db,
+        logger: log,
+        network: config.network,
+        walletRawAddress: config.walletRawAddress,
+      });
 
       while (!shutdown.isStopping) {
         const sleptFully = await waitForNextPoll(config.pollIntervalMs, shutdown);
@@ -85,32 +92,21 @@ export async function watchDepositSync(args: {
           break;
         }
 
-        const latestMasterchainInfo = await client.getMasterchainInfo();
-        const knownSeqno = state.currentCursor?.lastProcessedBlock.seqno ?? 0;
-        const latestSeqno = latestMasterchainInfo.last.seqno;
-
-        if (latestSeqno <= knownSeqno) {
-          log.debug(
-            {
-              knownSeqno,
-              latestSeqno,
-            },
-            "No new masterchain block since last processed snapshot",
-          );
-          continue;
-        }
-
         await runSyncIteration({
           client,
           config,
           db,
           emitToStdout: false,
-          iterationReason: "new_block",
-          logger: log.child({
-            latestMasterchainSeqno: latestSeqno,
-            previousMasterchainSeqno: knownSeqno,
-          }),
+          iterationReason: "poll",
+          logger: log,
           state,
+        });
+
+        await runDownstreamDispatchPass({
+          db,
+          logger: log,
+          network: config.network,
+          walletRawAddress: config.walletRawAddress,
         });
       }
     } finally {
@@ -128,7 +124,7 @@ async function runSyncIteration(args: {
   config: ReturnType<typeof loadConfig>;
   db: ReturnType<typeof createDatabase>["db"];
   emitToStdout: boolean;
-  iterationReason: "startup" | "new_block";
+  iterationReason: "startup" | "poll";
   logger: Logger;
   state: WatchState;
 }): Promise<void> {

@@ -11,7 +11,8 @@
     "db:studio": "bunx drizzle-kit studio",
     "db:up": "docker compose up -d",
     "start": "bun run src/index.ts",
-    "check": "tsc --noEmit"
+    "check": "tsc --noEmit",
+    "test": "bun test"
   },
   "dependencies": {
     "@ton/core": "^0.61.0",

@@ -1,4 +1,13 @@
-import { bigint, integer, pgTable, serial, text, unique } from "drizzle-orm/pg-core";
+import {
+  bigint,
+  boolean,
+  index,
+  integer,
+  pgTable,
+  serial,
+  text,
+  unique,
+} from "drizzle-orm/pg-core";
 
 export const incomingTransfersTable = pgTable(
   "incoming_transfers",
@@ -49,7 +58,54 @@ export const syncCursorsTable = pgTable(
   ],
 );
 
+export const downstreamServicesTable = pgTable(
+  "downstream_services",
+  {
+    id: serial("id").primaryKey(),
+    slug: text("slug").notNull(),
+    baseUrl: text("base_url").notNull(),
+    cursorPath: text("cursor_path").notNull(),
+    processTxPath: text("process_tx_path").notNull(),
+    signatureHeader: text("signature_header").notNull(),
+    privateKeyPem: text("private_key_pem").notNull(),
+    enabled: boolean("enabled").notNull().default(true),
+    createdAt: text("created_at").notNull(),
+    updatedAt: text("updated_at").notNull(),
+  },
+  (table) => [unique("downstream_services_slug_unique").on(table.slug)],
+);
+
+export const downstreamDeliveryAttemptsTable = pgTable(
+  "downstream_delivery_attempts",
+  {
+    id: serial("id").primaryKey(),
+    serviceId: integer("service_id").notNull(),
+    incomingTransferId: integer("incoming_transfer_id").notNull(),
+    status: text("status").notNull(),
+    attemptCount: integer("attempt_count").notNull(),
+    lastAttemptAt: text("last_attempt_at"),
+    nextRetryAt: text("next_retry_at"),
+    lastError: text("last_error"),
+    lastHttpStatus: integer("last_http_status"),
+    createdAt: text("created_at").notNull(),
+    updatedAt: text("updated_at").notNull(),
+  },
+  (table) => [
+    unique("downstream_delivery_attempts_service_transfer_unique").on(
+      table.serviceId,
+      table.incomingTransferId,
+    ),
+    index("downstream_delivery_attempts_service_status_retry_idx").on(
+      table.serviceId,
+      table.status,
+      table.nextRetryAt,
+    ),
+  ],
+);
+
 export const schema = {
+  downstreamDeliveryAttemptsTable,
+  downstreamServicesTable,
   incomingTransfersTable,
   syncCursorsTable,
 };
