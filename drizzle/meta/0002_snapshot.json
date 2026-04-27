@@ -1,0 +1,342 @@
+{
+  "id": "bb662b5e-1b72-4491-be17-685ca694a94e",
+  "prevId": "0b6735ee-ee2b-4406-ae98-688748bbc17d",
+  "version": "7",
+  "dialect": "postgresql",
+  "tables": {
+    "public.downstream_delivery_attempts": {
+      "name": "downstream_delivery_attempts",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "serial",
+          "primaryKey": true,
+          "notNull": true
+        },
+        "service_slug": {
+          "name": "service_slug",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "incoming_transfer_id": {
+          "name": "incoming_transfer_id",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "status": {
+          "name": "status",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "attempt_count": {
+          "name": "attempt_count",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "last_attempt_at": {
+          "name": "last_attempt_at",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "next_retry_at": {
+          "name": "next_retry_at",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "last_error": {
+          "name": "last_error",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "last_http_status": {
+          "name": "last_http_status",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "updated_at": {
+          "name": "updated_at",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        }
+      },
+      "indexes": {
+        "downstream_delivery_attempts_service_status_retry_idx": {
+          "name": "downstream_delivery_attempts_service_status_retry_idx",
+          "columns": [
+            {
+              "expression": "service_slug",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            },
+            {
+              "expression": "status",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            },
+            {
+              "expression": "next_retry_at",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        }
+      },
+      "foreignKeys": {},
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {
+        "downstream_delivery_attempts_service_transfer_unique": {
+          "name": "downstream_delivery_attempts_service_transfer_unique",
+          "nullsNotDistinct": false,
+          "columns": [
+            "service_slug",
+            "incoming_transfer_id"
+          ]
+        }
+      },
+      "policies": {},
+      "checkConstraints": {},
+      "isRLSEnabled": false
+    },
+    "public.incoming_transfers": {
+      "name": "incoming_transfers",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "serial",
+          "primaryKey": true,
+          "notNull": true
+        },
+        "network": {
+          "name": "network",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "wallet_raw_address": {
+          "name": "wallet_raw_address",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "tx_hash_hex": {
+          "name": "tx_hash_hex",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "tx_lt": {
+          "name": "tx_lt",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "to_raw_address": {
+          "name": "to_raw_address",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "from_raw_address": {
+          "name": "from_raw_address",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "memo": {
+          "name": "memo",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "memo_opcode": {
+          "name": "memo_opcode",
+          "type": "bigint",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "memo_type": {
+          "name": "memo_type",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "amount_nano": {
+          "name": "amount_nano",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "amount_ton": {
+          "name": "amount_ton",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "body_boc_base64": {
+          "name": "body_boc_base64",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "tx_now": {
+          "name": "tx_now",
+          "type": "bigint",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "tx_now_iso": {
+          "name": "tx_now_iso",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "inserted_at": {
+          "name": "inserted_at",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {},
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {
+        "incoming_transfers_wallet_tx_unique": {
+          "name": "incoming_transfers_wallet_tx_unique",
+          "nullsNotDistinct": false,
+          "columns": [
+            "network",
+            "wallet_raw_address",
+            "tx_hash_hex"
+          ]
+        }
+      },
+      "policies": {},
+      "checkConstraints": {},
+      "isRLSEnabled": false
+    },
+    "public.sync_cursors": {
+      "name": "sync_cursors",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "serial",
+          "primaryKey": true,
+          "notNull": true
+        },
+        "network": {
+          "name": "network",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "wallet_raw_address": {
+          "name": "wallet_raw_address",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "last_processed_tx_lt": {
+          "name": "last_processed_tx_lt",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "last_processed_tx_hash_hex": {
+          "name": "last_processed_tx_hash_hex",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "last_processed_block_seqno": {
+          "name": "last_processed_block_seqno",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "last_processed_block_shard": {
+          "name": "last_processed_block_shard",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "last_processed_block_workchain": {
+          "name": "last_processed_block_workchain",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "last_processed_block_root_hash_hex": {
+          "name": "last_processed_block_root_hash_hex",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "last_processed_block_file_hash_hex": {
+          "name": "last_processed_block_file_hash_hex",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "updated_at": {
+          "name": "updated_at",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {},
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {
+        "sync_cursors_wallet_unique": {
+          "name": "sync_cursors_wallet_unique",
+          "nullsNotDistinct": false,
+          "columns": [
+            "network",
+            "wallet_raw_address"
+          ]
+        }
+      },
+      "policies": {},
+      "checkConstraints": {},
+      "isRLSEnabled": false
+    }
+  },
+  "enums": {},
+  "schemas": {},
+  "sequences": {},
+  "roles": {},
+  "policies": {},
+  "views": {},
+  "_meta": {
+    "columns": {},
+    "schemas": {},
+    "tables": {}
+  }
+}

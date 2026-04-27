@@ -14,7 +14,7 @@ export async function syncIncomingTransfers(
   const walletRawAddress = args.wallet.toRawString();
   const walletFriendlyAddress = args.wallet.toString({
     bounceable: true,
-    testOnly: args.network === "testnet",
+    testOnly: args.network === "ton-testnet",
     urlSafe: true,
   });
 

@@ -32,3 +32,5 @@ export function createDatabase(args: {
 }
 
 export type AppDatabase = ReturnType<typeof createDatabase>["db"];
+export type AppDatabaseTx = Parameters<Parameters<AppDatabase["transaction"]>[0]>[0];
+export type AppDatabaseExecutor = AppDatabase | AppDatabaseTx;

@@ -4,7 +4,7 @@ import { type LiteClient } from "ton-lite-client";
 
 import type { TransactionCursor } from "../cursor/types";
 import { isSameCursor, toTransactionCursor } from "./cursor-utils";
-import type { HistoryScanResult } from "./types";
+import type { HistoryScanResult, ScannedTransaction } from "./types";
 
 type LoadTransactionsSinceCursorArgs = {
   address: Address;
@@ -29,7 +29,7 @@ export async function loadTransactionsSinceCursor(
   let shouldSkipFirstRepeatedTransaction = false;
   let reachedStopCursor = false;
   let pagesLoaded = 0;
-  const transactions: Transaction[] = [];
+  const transactions: ScannedTransaction[] = [];
 
   log.info("Starting wallet history scan");
 
@@ -46,6 +46,7 @@ export async function loadTransactionsSinceCursor(
     let pageTransactions = Cell.fromBoc(page.transactions).map((cell) =>
       loadTransaction(cell.beginParse()),
     );
+    let pageBlockIds = page.ids;
 
     const repeatedFirstTransactionSkipped =
       shouldSkipFirstRepeatedTransaction &&
@@ -54,6 +55,7 @@ export async function loadTransactionsSinceCursor(
 
     if (repeatedFirstTransactionSkipped) {
       pageTransactions = pageTransactions.slice(1);
+      pageBlockIds = pageBlockIds.slice(1);
     }
 
     shouldSkipFirstRepeatedTransaction = true;
@@ -79,12 +81,15 @@ export async function loadTransactionsSinceCursor(
       : -1;
 
     if (stopCursorIndex >= 0) {
-      transactions.push(...pageTransactions.slice(0, stopCursorIndex));
+      transactions.push(...toScannedTransactions(
+        pageTransactions.slice(0, stopCursorIndex),
+        pageBlockIds.slice(0, stopCursorIndex),
+      ));
       reachedStopCursor = true;
       break;
     }
 
-    transactions.push(...pageTransactions);
+    transactions.push(...toScannedTransactions(pageTransactions, pageBlockIds));
     pageCursor = toTransactionCursor(pageTransactions[pageTransactions.length - 1]);
   }
 
@@ -108,4 +113,20 @@ export async function loadTransactionsSinceCursor(
     reachedStopCursor,
     transactions,
   };
+}
+
+function toScannedTransactions(
+  transactions: Transaction[],
+  blockIds: { seqno: number }[],
+): ScannedTransaction[] {
+  if (transactions.length !== blockIds.length) {
+    throw new Error(
+      `Lite server returned ${transactions.length} transactions but ${blockIds.length} block ids`,
+    );
+  }
+
+  return transactions.map((transaction, index) => ({
+    blockSeqno: blockIds[index].seqno,
+    transaction,
+  }));
 }

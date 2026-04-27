@@ -1,0 +1,9 @@
+.env
+.env.*
+.git
+.gitignore
+data
+docker-compose.yml
+node_modules
+npm-debug.log*
+README.md

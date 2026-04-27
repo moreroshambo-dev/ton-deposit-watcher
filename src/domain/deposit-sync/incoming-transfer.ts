@@ -1,15 +1,16 @@
-import { fromNano, type Address, type Transaction } from "@ton/core";
+import { fromNano, type Address, type TransactionDescription } from "@ton/core";
 import type { Logger } from "pino";
 
 import { parseMessageMemo } from "./memo";
 import type {
   IncomingTransferStats,
   ParsedIncomingTransfer,
+  ScannedTransaction,
 } from "./types";
 
 type ExtractIncomingTransfersArgs = {
   logger: Logger;
-  transactions: Transaction[];
+  transactions: ScannedTransaction[];
   wallet: Address;
 };
 
@@ -31,7 +32,8 @@ export function extractIncomingTransfers(
   };
   const incomingTransfers: ParsedIncomingTransfer[] = [];
 
-  for (const transaction of args.transactions) {
+  for (const scannedTransaction of args.transactions) {
+    const transaction = scannedTransaction.transaction;
     const inMessage = transaction.inMessage;
 
     if (!inMessage) {
@@ -65,12 +67,14 @@ export function extractIncomingTransfers(
       amountTon: fromNano(inMessage.info.value.coins),
       bodyBocBase64: inMessage.body.toBoc({ idx: false }).toString("base64"),
       fromRawAddress: inMessage.info.src.toRawString(),
+      isCanceled: isTransactionCanceled(transaction.description),
       memo: memo.memo,
       memoOpcode: memo.memoOpcode,
       memoType: memo.memoType,
       now: transaction.now,
       nowIso: new Date(transaction.now * 1000).toISOString(),
       toRawAddress: inMessage.info.dest.toRawString(),
+      txBlockSeqno: scannedTransaction.blockSeqno,
       txHashHex: transaction.hash().toString("hex"),
       txLt: transaction.lt.toString(),
     };
@@ -98,4 +102,8 @@ export function extractIncomingTransfers(
     incomingTransfers,
     stats,
   };
+}
+
+function isTransactionCanceled(description: TransactionDescription): boolean {
+  return "aborted" in description && description.aborted;
 }

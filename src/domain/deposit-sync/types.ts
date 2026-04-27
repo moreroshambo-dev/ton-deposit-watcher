@@ -26,12 +26,14 @@ export type ParsedIncomingTransfer = {
   amountTon: string;
   bodyBocBase64: string;
   fromRawAddress: string;
+  isCanceled: boolean;
   memo: string | null;
   memoOpcode: number | null;
   memoType: MessageMemo["memoType"];
   now: number;
   nowIso: string;
   toRawAddress: string;
+  txBlockSeqno: number;
   txHashHex: string;
   txLt: string;
 };
@@ -49,7 +51,12 @@ export type IncomingTransferStats = {
 export type HistoryScanResult = {
   pagesLoaded: number;
   reachedStopCursor: boolean;
-  transactions: Transaction[];
+  transactions: ScannedTransaction[];
+};
+
+export type ScannedTransaction = {
+  blockSeqno: number;
+  transaction: Transaction;
 };
 
 export type SyncIncomingTransfersArgs = {
