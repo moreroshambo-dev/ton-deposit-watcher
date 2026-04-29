@@ -21,7 +21,22 @@ export async function watchDepositSync(args: {
   logger: Logger;
 }): Promise<void> {
   const env = args.env ?? process.env;
-  const config = loadConfig(env);
+
+  let config: ReturnType<typeof loadConfig>;
+  try {
+    config = loadConfig(env);
+  } catch (error: unknown) {
+    args.logger.fatal(
+      {
+        err: error,
+        errorMessage: error instanceof Error ? error.message : String(error),
+        errorStack: error instanceof Error ? error.stack : undefined,
+      },
+      "Failed to load config — check required environment variables",
+    );
+    throw error;
+  }
+
   const log = args.logger.child({
     network: config.network,
     walletRawAddress: config.walletRawAddress,
@@ -56,10 +71,25 @@ export async function watchDepositSync(args: {
       network: config.network,
       walletRawAddress: config.walletRawAddress,
     });
-    const { client, engine, serverCount } = await createLiteClientFromConfigUrl({
-      globalConfigUrl: config.globalConfigUrl,
-      logger: log,
-    });
+    let liteClientResult: Awaited<ReturnType<typeof createLiteClientFromConfigUrl>>;
+    try {
+      liteClientResult = await createLiteClientFromConfigUrl({
+        globalConfigUrl: config.globalConfigUrl,
+        logger: log,
+      });
+    } catch (error: unknown) {
+      log.fatal(
+        {
+          err: error,
+          errorMessage: error instanceof Error ? error.message : String(error),
+          errorStack: error instanceof Error ? error.stack : undefined,
+          globalConfigUrl: config.globalConfigUrl,
+        },
+        "Failed to initialize TON lite client",
+      );
+      throw error;
+    }
+    const { client, engine, serverCount } = liteClientResult;
 
     try {
       log.info({ serverCount }, "TON lite client is ready");
