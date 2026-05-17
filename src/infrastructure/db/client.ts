@@ -2,8 +2,8 @@ import { drizzle } from "drizzle-orm/postgres-js";
 import postgres from "postgres";
 import type { Logger } from "pino";
 
-import { type DatabaseConnectionInfo } from "../../app/config";
-import { schema } from "./schema";
+import { type DatabaseConnectionInfo } from "~/app/config";
+import { schema } from "~/infrastructure/db/schema";
 
 export function createDatabase(args: {
   databaseConnectionInfo: DatabaseConnectionInfo;

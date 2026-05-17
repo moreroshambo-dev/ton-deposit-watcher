@@ -1,4 +1,3 @@
-import type { Logger } from "pino";
 import {
   LiteClient,
   LiteRoundRobinEngine,
@@ -7,17 +6,18 @@ import {
 } from "ton-lite-client";
 
 import { intToIP, loadLiteServers } from "./global-config";
+import { GenericOptions } from "~/domain/fn/types";
 
-export async function createLiteClientFromConfigUrl(args: {
-  globalConfigUrl: string;
-  logger: Logger;
-}): Promise<{
+export async function createTonLiteClient(options: GenericOptions): Promise<{
   client: LiteClient;
   engine: LiteEngine;
   serverCount: number;
 }> {
-  const log = args.logger.child({ scope: "ton_lite_client" });
-  const liteServers = await loadLiteServers(args.globalConfigUrl, args.logger);
+  const log = options.logger.child({ fn: "createTonLiteClient" });
+  const liteServers = await loadLiteServers(
+    {globalConfigUrl: options.config.globalConfigUrl},
+    {logger: options.logger, signal: options.signal},
+  );
   const engines = liteServers.map((server) => {
     const host = `tcp://${intToIP(server.ip)}:${server.port}`;
     const serverLog = log.child({ host });
@@ -46,7 +46,11 @@ export async function createLiteClientFromConfigUrl(args: {
   });
 
   const engine = new LiteRoundRobinEngine(engines);
-  const client = new LiteClient({ engine });
+  const client = new LiteClient({engine});
+
+  options.signal?.addEventListener('abort', () => {
+    engine.close()
+  })
 
   log.info({ liteServerCount: liteServers.length }, "Created TON lite client");
 

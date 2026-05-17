@@ -21,22 +21,34 @@ const globalConfigSchema = z
 
 export type LiteServer = z.infer<typeof liteServerSchema>;
 
+type LoadLiteServersPayload = {
+  globalConfigUrl: string
+}
+
+type LoadLiteServersOptions = {
+  logger: Logger
+  signal?: AbortSignal
+}
+
 export async function loadLiteServers(
-  globalConfigUrl: string,
-  logger: Logger,
+  payload: LoadLiteServersPayload,
+  options: LoadLiteServersOptions,
 ): Promise<LiteServer[]> {
-  const log = logger.child({
-    scope: "ton_global_config",
-    globalConfigUrl,
+  const log = options.logger.child({
+    fn: "loadLiteServers",
+    globalConfigUrl: payload.globalConfigUrl,
   });
 
   log.info("Fetching TON global config");
 
-  const response = await fetch(globalConfigUrl);
+  const response = await fetch(
+    payload.globalConfigUrl,
+    {signal: options.signal},
+  );
 
   if (!response.ok) {
     throw new Error(
-      `Failed to fetch TON global config from ${globalConfigUrl}: ${response.status} ${response.statusText}`,
+      `Failed to fetch TON global config from ${payload.globalConfigUrl}: ${response.status} ${response.statusText}`,
     );
   }
 
@@ -44,7 +56,7 @@ export async function loadLiteServers(
   const liteServers = globalConfigSchema.parse(rawConfig);
 
   if (liteServers.length === 0) {
-    throw new Error(`TON global config at ${globalConfigUrl} does not contain any liteservers.`);
+    throw new Error(`TON global config at ${payload.globalConfigUrl} does not contain any liteservers.`);
   }
 
   log.info(

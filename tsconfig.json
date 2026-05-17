@@ -6,7 +6,10 @@
     "strict": true,
     "skipLibCheck": true,
     "noEmit": true,
-    "types": ["bun-types"]
+    "types": ["bun-types"],
+    "paths": {
+      "~/*": ["./src/*"]
+    }
   },
   "include": ["src", "drizzle.config.ts"]
 }
