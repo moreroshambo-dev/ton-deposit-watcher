@@ -1,0 +1,1 @@
+ALTER TABLE "downstream" ALTER COLUMN "network" SET NOT NULL;

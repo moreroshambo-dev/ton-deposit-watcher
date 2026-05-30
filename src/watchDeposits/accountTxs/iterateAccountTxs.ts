@@ -1,0 +1,101 @@
+import { Cell, loadTransaction, Transaction } from '@ton/core';
+import { Logger } from 'pino';
+import type { BlockID, LiteClient } from 'ton-lite-client';
+import { withRetry } from '~/shared/utils/withRetry';
+import { createParserCursorByTx, ParserCursor } from './createParserCursorByTx';
+import { bufferToBigInt } from '~/shared/utils/bufferToBigint';
+
+type IterateAccountTransactionsOptions = {
+  logger: Logger,
+  signal?: AbortSignal
+  /**
+   * Размер пачки транзакций за один запрос.
+   */
+  batchSize?: number;
+}
+
+type IterateAccountTransactionsPayload = {
+  /**
+   * Самая новая транзакция, от которой начинаем читать историю назад.
+   */
+  from: ParserCursor,
+  /**
+   * Это самая старая транза на которой остановимся
+   * Если не передать — чтение пойдет до самого начала истории аккаунта.
+   * 
+   * Транзакция с `to` не будет yield'иться.
+   */
+  to?: ParserCursor
+};
+
+/**
+ * Итерирует транзакции аккаунта от текущей последней транзакции
+ * назад до последней уже обработанной транзакции.
+ *
+ * Порядок yield: от новых транзакций к старым.
+ */
+export async function* iterateAccountTransactions(
+  client: LiteClient,
+  payload: IterateAccountTransactionsPayload,
+  options: IterateAccountTransactionsOptions,
+): AsyncGenerator<{tx: Transaction, blockId: BlockID}> {
+  const log = options.logger.child({
+    fn: 'iterateAccountTransactions'
+  })
+  const batchSize = options.batchSize ?? 100;
+
+  let txCursor: ParserCursor = payload.from
+
+  while (!options.signal?.aborted) {
+    let oldestTx: Transaction | null = null;
+
+    const page = await withRetry(
+      () => client.getAccountTransactions(
+        txCursor.address,
+        txCursor.lt.toString(),
+        txCursor.hash,
+        batchSize,
+      ),
+      {
+        op: 'client.getAccountTransactions',
+        logger: log,
+      }
+    )
+
+    const pageCells = Cell.fromBoc(page.transactions)
+
+    if (pageCells.length === 0) {
+      return;
+    }
+
+    for (let cellIndex = 0; cellIndex < pageCells.length; cellIndex++) {
+      const tx = loadTransaction(pageCells[cellIndex].beginParse())
+      
+      if (payload.to && tx.lt <= payload.to.lt) {
+        return;
+      }
+
+      oldestTx = tx
+
+      log.info('new tx: %s; tx-now=%s', bufferToBigInt(tx.hash()).toString(16), new Date(tx.now * 1000).toLocaleString())
+
+      yield {tx, blockId: page.ids[cellIndex]}
+    }
+
+    if (
+      !oldestTx ||
+      !oldestTx.prevTransactionLt ||
+      !oldestTx.prevTransactionHash
+    ) {
+      return;
+    }
+
+    txCursor = createParserCursorByTx(
+      {
+        lt: oldestTx.prevTransactionLt,
+        hash: oldestTx.prevTransactionHash,
+      },
+      txCursor.address,
+    )
+  }
+}

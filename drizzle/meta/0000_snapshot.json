@@ -1,17 +1,34 @@
 {
-  "id": "80124263-8cc2-43b2-a118-3c80b9f6749f",
+  "id": "31a60294-14ec-483f-a5e9-4255fa75659a",
   "prevId": "00000000-0000-0000-0000-000000000000",
   "version": "7",
   "dialect": "postgresql",
   "tables": {
-    "public.incoming_transfers": {
-      "name": "incoming_transfers",
+    "public.blockId": {
+      "name": "blockId",
       "schema": "",
       "columns": {
         "id": {
           "name": "id",
-          "type": "serial",
+          "type": "integer",
           "primaryKey": true,
+          "notNull": true,
+          "identity": {
+            "type": "always",
+            "name": "blockId_id_seq",
+            "schema": "public",
+            "increment": "1",
+            "startWith": "1",
+            "minValue": "1",
+            "maxValue": "2147483647",
+            "cache": "1",
+            "cycle": false
+          }
+        },
+        "workchain": {
+          "name": "workchain",
+          "type": "integer",
+          "primaryKey": false,
           "notNull": true
         },
         "network": {
@@ -20,87 +37,27 @@
           "primaryKey": false,
           "notNull": true
         },
-        "wallet_raw_address": {
-          "name": "wallet_raw_address",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": true
-        },
-        "tx_hash_hex": {
-          "name": "tx_hash_hex",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": true
-        },
-        "tx_lt": {
-          "name": "tx_lt",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": true
-        },
-        "to_raw_address": {
-          "name": "to_raw_address",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": true
-        },
-        "from_raw_address": {
-          "name": "from_raw_address",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": true
-        },
-        "memo": {
-          "name": "memo",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": false
-        },
-        "memo_opcode": {
-          "name": "memo_opcode",
+        "shard": {
+          "name": "shard",
           "type": "bigint",
           "primaryKey": false,
           "notNull": false
         },
-        "memo_type": {
-          "name": "memo_type",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": true
-        },
-        "amount_nano": {
-          "name": "amount_nano",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": true
-        },
-        "amount_ton": {
-          "name": "amount_ton",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": true
-        },
-        "body_boc_base64": {
-          "name": "body_boc_base64",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": true
-        },
-        "tx_now": {
-          "name": "tx_now",
+        "seqno": {
+          "name": "seqno",
           "type": "bigint",
           "primaryKey": false,
           "notNull": true
         },
-        "tx_now_iso": {
-          "name": "tx_now_iso",
-          "type": "text",
+        "rootHash": {
+          "name": "rootHash",
+          "type": "varchar(128)",
           "primaryKey": false,
           "notNull": true
         },
-        "inserted_at": {
-          "name": "inserted_at",
-          "type": "text",
+        "fileHash": {
+          "name": "fileHash",
+          "type": "varchar(128)",
           "primaryKey": false,
           "notNull": true
         }
@@ -109,13 +66,25 @@
       "foreignKeys": {},
       "compositePrimaryKeys": {},
       "uniqueConstraints": {
-        "incoming_transfers_wallet_tx_unique": {
-          "name": "incoming_transfers_wallet_tx_unique",
+        "blockId_seqno_unique": {
+          "name": "blockId_seqno_unique",
           "nullsNotDistinct": false,
           "columns": [
-            "network",
-            "wallet_raw_address",
-            "tx_hash_hex"
+            "seqno"
+          ]
+        },
+        "blockId_rootHash_unique": {
+          "name": "blockId_rootHash_unique",
+          "nullsNotDistinct": false,
+          "columns": [
+            "rootHash"
+          ]
+        },
+        "blockId_fileHash_unique": {
+          "name": "blockId_fileHash_unique",
+          "nullsNotDistinct": false,
+          "columns": [
+            "fileHash"
           ]
         }
       },
@@ -123,14 +92,73 @@
       "checkConstraints": {},
       "isRLSEnabled": false
     },
-    "public.sync_cursors": {
-      "name": "sync_cursors",
+    "public.deposits_tx": {
+      "name": "deposits_tx",
       "schema": "",
       "columns": {
         "id": {
           "name": "id",
-          "type": "serial",
+          "type": "integer",
           "primaryKey": true,
+          "notNull": true,
+          "identity": {
+            "type": "byDefault",
+            "name": "deposits_tx_id_seq",
+            "schema": "public",
+            "increment": "1",
+            "startWith": "1",
+            "minValue": "1",
+            "maxValue": "2147483647",
+            "cache": "1",
+            "cycle": false
+          }
+        },
+        "hash": {
+          "name": "hash",
+          "type": "varchar(128)",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "amount": {
+          "name": "amount",
+          "type": "bigint",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "lt": {
+          "name": "lt",
+          "type": "bigint",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "from": {
+          "name": "from",
+          "type": "varchar(128)",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "to": {
+          "name": "to",
+          "type": "varchar(128)",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "memo": {
+          "name": "memo",
+          "type": "varchar(256)",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "now": {
+          "name": "now",
+          "type": "date",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "status": {
+          "name": "status",
+          "type": "text",
+          "primaryKey": false,
           "notNull": true
         },
         "network": {
@@ -139,74 +167,137 @@
           "primaryKey": false,
           "notNull": true
         },
-        "wallet_raw_address": {
-          "name": "wallet_raw_address",
-          "type": "text",
+        "seqno": {
+          "name": "seqno",
+          "type": "bigint",
           "primaryKey": false,
           "notNull": true
         },
-        "last_processed_tx_lt": {
-          "name": "last_processed_tx_lt",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": false
-        },
-        "last_processed_tx_hash_hex": {
-          "name": "last_processed_tx_hash_hex",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": false
-        },
-        "last_processed_block_seqno": {
-          "name": "last_processed_block_seqno",
+        "workchain": {
+          "name": "workchain",
           "type": "integer",
           "primaryKey": false,
           "notNull": true
         },
-        "last_processed_block_shard": {
-          "name": "last_processed_block_shard",
-          "type": "text",
+        "shard": {
+          "name": "shard",
+          "type": "bigint",
           "primaryKey": false,
-          "notNull": true
-        },
-        "last_processed_block_workchain": {
-          "name": "last_processed_block_workchain",
-          "type": "integer",
-          "primaryKey": false,
-          "notNull": true
-        },
-        "last_processed_block_root_hash_hex": {
-          "name": "last_processed_block_root_hash_hex",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": true
-        },
-        "last_processed_block_file_hash_hex": {
-          "name": "last_processed_block_file_hash_hex",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": true
-        },
-        "updated_at": {
-          "name": "updated_at",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": true
+          "notNull": false
         }
       },
       "indexes": {},
       "foreignKeys": {},
       "compositePrimaryKeys": {},
       "uniqueConstraints": {
-        "sync_cursors_wallet_unique": {
-          "name": "sync_cursors_wallet_unique",
+        "deposits_tx_hash_unique": {
+          "name": "deposits_tx_hash_unique",
           "nullsNotDistinct": false,
           "columns": [
-            "network",
-            "wallet_raw_address"
+            "hash"
+          ]
+        },
+        "deposits_tx_from_lt": {
+          "name": "deposits_tx_from_lt",
+          "nullsNotDistinct": false,
+          "columns": [
+            "from",
+            "lt"
           ]
         }
       },
+      "policies": {},
+      "checkConstraints": {},
+      "isRLSEnabled": false
+    },
+    "public.downstream": {
+      "name": "downstream",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "integer",
+          "primaryKey": true,
+          "notNull": true,
+          "identity": {
+            "type": "byDefault",
+            "name": "downstream_id_seq",
+            "schema": "public",
+            "increment": "1",
+            "startWith": "1",
+            "minValue": "1",
+            "maxValue": "2147483647",
+            "cache": "1",
+            "cycle": false
+          }
+        },
+        "downstreamSlug": {
+          "name": "downstreamSlug",
+          "type": "varchar(32)",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "status": {
+          "name": "status",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "depositTxId": {
+          "name": "depositTxId",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "userId": {
+          "name": "userId",
+          "type": "varchar(64)",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "from": {
+          "name": "from",
+          "type": "varchar(128)",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "hash": {
+          "name": "hash",
+          "type": "varchar(128)",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "amount": {
+          "name": "amount",
+          "type": "bigint",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "txStatus": {
+          "name": "txStatus",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {
+        "depositTx_fk": {
+          "name": "depositTx_fk",
+          "tableFrom": "downstream",
+          "tableTo": "deposits_tx",
+          "columnsFrom": [
+            "depositTxId"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
       "policies": {},
       "checkConstraints": {},
       "isRLSEnabled": false
