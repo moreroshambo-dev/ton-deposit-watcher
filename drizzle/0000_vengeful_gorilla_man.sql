@@ -38,7 +38,8 @@ CREATE TABLE "downstream" (
 	"from" varchar(128) NOT NULL,
 	"hash" varchar(128) NOT NULL,
 	"amount" bigint NOT NULL,
-	"txStatus" text NOT NULL
+	"txStatus" text NOT NULL,
+	"network" text NOT NULL
 );
 --> statement-breakpoint
 ALTER TABLE "downstream" ADD CONSTRAINT "depositTx_fk" FOREIGN KEY ("depositTxId") REFERENCES "public"."deposits_tx"("id") ON DELETE no action ON UPDATE no action;

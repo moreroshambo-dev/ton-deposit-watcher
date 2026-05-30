@@ -15,7 +15,7 @@ export async function watchDepositSync(
 ) {
   const log = options.logger.child({
     fn: 'run',
-    address: options.config.address,
+    address: options.config.address.toRawString(),
     network: options.config.network,
     downstreamServices: options.config.downstreamServices.slug,
   })

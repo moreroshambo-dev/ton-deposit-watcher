@@ -5,22 +5,8 @@
     {
       "idx": 0,
       "version": "7",
-      "when": 1779621908587,
-      "tag": "0000_previous_martin_li",
-      "breakpoints": true
-    },
-    {
-      "idx": 1,
-      "version": "7",
-      "when": 1780177576036,
-      "tag": "0001_petite_lady_deathstrike",
-      "breakpoints": true
-    },
-    {
-      "idx": 2,
-      "version": "7",
-      "when": 1780177656625,
-      "tag": "0002_shiny_maginty",
+      "when": 1780178517024,
+      "tag": "0000_vengeful_gorilla_man",
       "breakpoints": true
     }
   ]

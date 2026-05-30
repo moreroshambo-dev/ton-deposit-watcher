@@ -1,5 +1,5 @@
 {
-  "id": "31a60294-14ec-483f-a5e9-4255fa75659a",
+  "id": "d8416492-438a-4924-9bce-0fa11188b9fc",
   "prevId": "00000000-0000-0000-0000-000000000000",
   "version": "7",
   "dialect": "postgresql",
@@ -275,6 +275,12 @@
         },
         "txStatus": {
           "name": "txStatus",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "network": {
+          "name": "network",
           "type": "text",
           "primaryKey": false,
           "notNull": true

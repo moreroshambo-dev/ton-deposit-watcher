@@ -10,6 +10,7 @@ export type UpdateEntity = {
     hash: DownstreamQueueTableInsert['hash']
     amount: DownstreamQueueTableInsert['amount']
     txStatus: DownstreamQueueTableInsert['txStatus']
+    network: DownstreamQueueTableInsert['network']
 }
 
 export const depositEntityToUpdateEntity = (depositEntity: DepositTableSelect): UpdateEntity | undefined => {
@@ -24,6 +25,7 @@ export const depositEntityToUpdateEntity = (depositEntity: DepositTableSelect): 
     hash: depositEntity.hash,
     amount: depositEntity.amount,
     txStatus: depositEntity.status,
+    network: depositEntity.network,
   }
 }
 

@@ -3,7 +3,7 @@ import { Logger } from 'pino';
 import type { BlockID, LiteClient } from 'ton-lite-client';
 import { withRetry } from '~/shared/utils/withRetry';
 import { createParserCursorByTx, ParserCursor } from './createParserCursorByTx';
-import { bufferToBigInt } from '~/shared/utils/bufferToBigint';
+import { bufferToBigInt } from '~/shared/utils/bufferToBigInt';
 
 type IterateAccountTransactionsOptions = {
   logger: Logger,
