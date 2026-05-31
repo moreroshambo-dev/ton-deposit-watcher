@@ -55,9 +55,12 @@ export const downstreamQueueTable = pgTable(
     userId: varchar({ length: 64 }).notNull(),
     from: varchar({ length: 128 }).notNull(),
     hash: varchar({ length: 128 }).notNull(),
-    amount: bigint({mode: 'bigint'}).notNull(),
+    nanoTON: bigint({mode: 'bigint'}).notNull(),
+    creditedTokens: integer().default(0).notNull(),
     txStatus: text({enum: ['pending', 'confirmed', 'canceled']}).notNull(),
     network: text({enum: ['ton', 'ton-testnet']}).notNull(),
+    initiatedAt: date({mode: 'date'}).defaultNow().notNull(),
+    downstreamHttpError: text(),
   },
   (table) => [
     foreignKey({

@@ -1,20 +1,35 @@
-import { GenericOptionsWithDb } from "~/domain/fn/types"
-import { DepositTableSelect, downstreamQueueTable, DownstreamQueueTableInsert } from "~/infrastructure/db/schema"
+import { GenericOptions, GenericOptionsWithDb } from "~/domain/fn/types"
+import { DepositTableSelect, downstreamQueueTable } from "~/infrastructure/db/schema"
 import { UpdateEntity } from "./iterateDownstreamUpdates"
 
-export const depositEntityToUpdateEntity = (depositEntity: DepositTableSelect): UpdateEntity | undefined => {
+
+const NANO_PER_TON = 1_000_000_000n;
+
+function nanoTonToCurrency(
+  amountNanoTon: bigint,
+  ratePerTon: bigint,
+): number {
+  return Number((amountNanoTon * ratePerTon) / NANO_PER_TON);
+}
+
+export const depositEntityToUpdateEntity = (depositEntity: DepositTableSelect, options: GenericOptions): UpdateEntity | undefined => {
   if (!depositEntity.memo) {
     return
   }
+
+  const nanoTON = depositEntity.amount
+  const creditedTokens = nanoTonToCurrency(nanoTON, 1000n)
 
   return {
     depositTxId: depositEntity.id,
     userId: depositEntity.memo.slice(0, 64),
     from: depositEntity.from,
     hash: depositEntity.hash,
-    amount: depositEntity.amount,
+    nanoTON,
     txStatus: depositEntity.status,
     network: depositEntity.network,
+    creditedTokens,
+    downstreamSlug: options.config.downstreamServices.slug,
   }
 }
 
@@ -31,7 +46,7 @@ export const addDownstreamUpdate = async (
   })
 
   const updates = payload.updates
-    .map((deposit) => depositEntityToUpdateEntity(deposit))
+    .map((deposit) => depositEntityToUpdateEntity(deposit, options))
     .filter((updateOrEmpty): updateOrEmpty is UpdateEntity => Boolean(updateOrEmpty))
     .map((update) => ({
       ...update,

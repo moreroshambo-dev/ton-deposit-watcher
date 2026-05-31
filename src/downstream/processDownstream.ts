@@ -3,6 +3,7 @@ import { downstreamTxUpdate } from "~/downstream/downstreamTxUpdate";
 import { withRetry } from "~/shared/utils/withRetry";
 import { setQueueStatus } from "~/downstream/setQueueStatus";
 import { GenericOptionsWithDb } from "~/domain/fn/types";
+import { DownstreamHttpError } from "./downstreamHttpRequest";
 
 export const processDownstream = async (options: GenericOptionsWithDb) => {
   const log = options.logger.child({fn: 'processDownstream'})
@@ -17,20 +18,31 @@ export const processDownstream = async (options: GenericOptionsWithDb) => {
         {status: 'sending', id: update.id},
         {...options, logger: log, db: dbTx},
       )
-      await withRetry(
-        () => downstreamTxUpdate(
-          {update},
-          {...options, logger: log},
-        ),
-        {
-          logger: log,
-          op: 'downstreamTxUpdate'
+      try {
+        await withRetry(
+          () => downstreamTxUpdate(
+            {update},
+            {...options, logger: log},
+          ),
+          {
+            logger: log,
+            op: 'downstreamTxUpdate'
+          }
+        ) 
+        await setQueueStatus(
+          {status: 'done', id: update.id},
+          {...options, logger: log, db: dbTx},
+        )  
+      } catch (error) {
+        if (error instanceof DownstreamHttpError) {
+          await setQueueStatus(
+            {status: 'error', id: update.id, downstreamHttpError: error.message},
+            {...options, logger: log, db: dbTx},
+          )  
+        } else {
+          throw error
         }
-      ) 
-      await setQueueStatus(
-        {status: 'done', id: update.id},
-        {...options, logger: log, db: dbTx},
-      )  
+      }
     })
   }
 }

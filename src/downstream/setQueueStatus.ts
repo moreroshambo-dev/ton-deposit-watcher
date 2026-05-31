@@ -6,6 +6,7 @@ import { eq } from "drizzle-orm"
 type SetQueueStatusPayload = {
   status: DownstreamQueueTableInsert['status'],
   id: DownstreamQueueTableSelect['id']
+  downstreamHttpError?: string
 }
 
 type SetQueueStatusOptions = {
@@ -17,6 +18,6 @@ type SetQueueStatusOptions = {
 export const setQueueStatus = async (payload: SetQueueStatusPayload, options: SetQueueStatusOptions) => {
   await options.db
     .update(downstreamQueueTable)
-    .set({status: payload.status})
+    .set({status: payload.status, downstreamHttpError: payload.downstreamHttpError})
     .where(eq(downstreamQueueTable.id, payload.id))
 }

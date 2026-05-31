@@ -16,7 +16,7 @@ export function createParserCursorByTx(
     hash: typeof tx.hash === 'bigint'
       ? uint256ToBuffer(tx.hash)
       : typeof tx.hash === 'string'
-        ? Buffer.from(tx.hash)
+        ? Buffer.from(tx.hash, 'hex')
         : tx.hash(),
     address,
   };

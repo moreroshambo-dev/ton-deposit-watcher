@@ -32,6 +32,10 @@ export const updateDepositStatus = async (payload: UpdateDepositStatusPayload, o
     return
   }
 
+  console.log({
+    seqno: lastBlock.seqno,
+    address: options.config.address.toRawString()
+  })
   const needUpdate = await options.db
     .select()
     .from(depositTable)

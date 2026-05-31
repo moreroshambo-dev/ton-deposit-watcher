@@ -44,6 +44,10 @@ export async function* iterateAccountTransactions(
   })
   const batchSize = options.batchSize ?? 100;
 
+  if (!Number.isInteger(batchSize) || batchSize <= 0) {
+    throw new Error('batchSize must be a positive integer');
+  }
+
   let txCursor: ParserCursor = payload.from
 
   while (!options.signal?.aborted) {
@@ -59,10 +63,17 @@ export async function* iterateAccountTransactions(
       {
         op: 'client.getAccountTransactions',
         logger: log,
+        signal: options.signal,
       }
     )
 
     const pageCells = Cell.fromBoc(page.transactions)
+
+    if (pageCells.length !== page.ids.length) {
+      throw new Error(
+        `client.getAccountTransactions returned ${pageCells.length} transactions and ${page.ids.length} block ids`
+      );
+    }
 
     if (pageCells.length === 0) {
       return;
@@ -84,8 +95,7 @@ export async function* iterateAccountTransactions(
 
     if (
       !oldestTx ||
-      !oldestTx.prevTransactionLt ||
-      !oldestTx.prevTransactionHash
+      oldestTx.prevTransactionLt === 0n
     ) {
       return;
     }

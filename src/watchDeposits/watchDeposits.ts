@@ -47,19 +47,17 @@ export async function watchDeposits(options: GenericOptionsWithDb) {
     )) {
       const deposit = txEntityToDepositEntity({tx: blockChainTx, blockId, depositAddress: options.config.address})
     
-      if (!deposit) {
-        return
+      if (deposit) {
+        await options.db.transaction(async (dbTx) => {
+          const deposits = await saveDepositTx({
+            depositTx: deposit,
+          }, {...options, logger: log, db: dbTx})
+  
+          if (deposits && deposits.length) {
+            await addDownstreamUpdate({updates: deposits}, {...options, logger: log, db: dbTx})
+          }
+        })
       }
-
-      await options.db.transaction(async (dbTx) => {
-        const deposits = await saveDepositTx({
-          depositTx: deposit,
-        }, {...options, logger: log, db: dbTx})
-
-        if (deposits && deposits.length) {
-          await addDownstreamUpdate({updates: deposits}, {...options, logger: log, db: dbTx})
-        }
-      })
     }
 
     await saveMasterchainBlockId({blockId: lastBlockId}, {...options, logger: log})

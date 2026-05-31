@@ -1,32 +1,18 @@
-import { DepositTableSelect, downstreamQueueTable, DownstreamQueueTableInsert } from "~/infrastructure/db/schema"
-import { and, desc, eq } from "drizzle-orm"
+import { downstreamQueueTable, DownstreamQueueTableInsert } from "~/infrastructure/db/schema"
+import { and, asc, eq } from "drizzle-orm"
 import { sleep } from "~/shared/utils/sleep"
 import { GenericOptionsWithDb } from "~/domain/fn/types"
 
 export type UpdateEntity = {
-    depositTxId: DownstreamQueueTableInsert['depositTxId']
-    userId: DownstreamQueueTableInsert['userId']
-    from: DownstreamQueueTableInsert['from']
-    hash: DownstreamQueueTableInsert['hash']
-    amount: DownstreamQueueTableInsert['amount']
-    txStatus: DownstreamQueueTableInsert['txStatus']
-    network: DownstreamQueueTableInsert['network']
-}
-
-export const depositEntityToUpdateEntity = (depositEntity: DepositTableSelect): UpdateEntity | undefined => {
-  if (!depositEntity.memo) {
-    return
-  }
-
-  return {
-    depositTxId: depositEntity.id,
-    userId: depositEntity.memo.slice(0, 64),
-    from: depositEntity.from,
-    hash: depositEntity.hash,
-    amount: depositEntity.amount,
-    txStatus: depositEntity.status,
-    network: depositEntity.network,
-  }
+  depositTxId: DownstreamQueueTableInsert['depositTxId']
+  userId: DownstreamQueueTableInsert['userId']
+  from: DownstreamQueueTableInsert['from']
+  hash: DownstreamQueueTableInsert['hash']
+  nanoTON: DownstreamQueueTableInsert['nanoTON']
+  txStatus: DownstreamQueueTableInsert['txStatus']
+  network: DownstreamQueueTableInsert['network']
+  downstreamSlug: DownstreamQueueTableInsert['downstreamSlug']
+  creditedTokens: DownstreamQueueTableInsert['creditedTokens']
 }
 
 export async function* iterateDownstreamUpdates(options: GenericOptionsWithDb) {
@@ -44,7 +30,7 @@ export async function* iterateDownstreamUpdates(options: GenericOptionsWithDb) {
           eq(downstreamQueueTable.downstreamSlug, options.config.downstreamServices.slug),
         )
       )
-      .orderBy(desc(downstreamQueueTable.id))
+      .orderBy(asc(downstreamQueueTable.id))
       .limit(1)
   
     if (queryResult.length < 1) {

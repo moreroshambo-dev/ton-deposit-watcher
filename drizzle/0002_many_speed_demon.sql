@@ -1,0 +1,1 @@
+ALTER TABLE "downstream" ADD COLUMN "downstreamHttpError" text;

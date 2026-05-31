@@ -27,12 +27,15 @@ const REQUEST_TIMEOUT_MS = 10000
 export class DownstreamHttpError extends Error {
   public readonly httpStatus: number | null;
   public readonly isRetryable: boolean;
+  public readonly responseData?: unknown;
+  public readonly responseText?: string
 
   constructor(args: {
     cause?: unknown;
     httpStatus: number | null;
     isRetryable: boolean;
     message: string;
+    responseText?: string
   }) {
     super(args.message);
     this.name = "DownstreamHttpError";
@@ -41,6 +44,18 @@ export class DownstreamHttpError extends Error {
 
     if (args.cause !== undefined) {
       this.cause = args.cause;
+    }
+
+    if (typeof args.responseText === 'string') {
+      this.responseText = args.responseText
+
+      try {
+        const responseData = JSON.parse(args.responseText)
+
+        console.log(responseData)
+
+        this.responseData = responseData
+      } catch {}
     }
   }
 }
@@ -63,7 +78,9 @@ export const downstreamHttpRequest = async (payload: HttpRequestPayload, options
 
   if (!response.ok) {
     const responseText = await response.text();
+
     throw new DownstreamHttpError({
+      responseText,
       httpStatus: response.status,
       isRetryable: response.status >= 500,
       message: `Downstream service responded with ${response.status}: ${responseText}`,

@@ -1,0 +1,1 @@
+ALTER TABLE "downstream" RENAME COLUMN "amount" TO "nanoTON";
