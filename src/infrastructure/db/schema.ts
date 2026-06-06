@@ -9,15 +9,21 @@ import {
   foreignKey,
 } from "drizzle-orm/pg-core";
 
-export const blockIdTable = pgTable('blockId', {
-  id: integer().primaryKey().generatedAlwaysAsIdentity(),
-  workchain: integer().notNull(),
-  network: text({enum: ['ton', 'ton-testnet']}).notNull(),
-  shard: bigint({mode: 'bigint'}),
-  seqno: bigint({mode: 'number'}).notNull().unique(),
-  rootHash: varchar("rootHash", { length: 128 }).unique().notNull(),
-  fileHash: varchar("fileHash", { length: 128 }).unique().notNull(),
-});
+export const blockIdTable = pgTable(
+  'blockId', 
+  {
+    id: integer().primaryKey().generatedAlwaysAsIdentity(),
+    workchain: integer().notNull(),
+    network: text({enum: ['ton', 'ton-testnet']}).notNull(),
+    shard: bigint({mode: 'bigint'}),
+    seqno: bigint({mode: 'number'}).notNull(),
+    rootHash: varchar("rootHash", { length: 128 }).unique().notNull(),
+    fileHash: varchar("fileHash", { length: 128 }).unique().notNull(),
+  },
+  (table) => [
+    unique('blockId_seqno_workchain').on(table.seqno, table.workchain),
+  ]
+);
 
 export const depositTable = pgTable(
   'deposits_tx', 

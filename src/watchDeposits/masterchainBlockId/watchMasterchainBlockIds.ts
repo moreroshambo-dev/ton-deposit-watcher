@@ -9,6 +9,19 @@ type WatchMasterchainBlockIdsOptions = {
   signal?: AbortSignal;
 };
 
+const isSameBlock = (
+  blockIdA?: MasterchainBlockId | null,
+  blockIdB?: MasterchainBlockId | null
+) => {
+  return (
+    blockIdA
+    && blockIdB
+    && blockIdA.seqno.toString() == blockIdB.seqno.toString()
+    && blockIdA.shard.toString() == blockIdB.shard.toString()
+    && blockIdA.workchain == blockIdB.workchain
+  )
+}
+
 /**
  * Непрерывно отслеживает изменение последнего masterchain-блока TON.
  *
@@ -43,7 +56,7 @@ export async function* watchMasterchainBlockIds(
   client: LiteClient,
   options: WatchMasterchainBlockIdsOptions,
 ): AsyncGenerator<MasterchainBlockId, void, unknown> {
-  let lastSeqno: number | null = null;
+  let lastBlockId: MasterchainBlockId | null = null;
 
   const log = options.logger.child({
     fn: 'watchMasterchainBlockIds',
@@ -61,18 +74,14 @@ export async function* watchMasterchainBlockIds(
       }
     )
 
-    if (lastSeqno !== mc.last.seqno) {
+    if (!isSameBlock(lastBlockId, mc.last)) {
       log.info('new block seqno %d', mc.last.seqno)
 
       yield mc.last
 
-      lastSeqno = mc.last.seqno
+      lastBlockId = mc.last
     }
 
     await sleep(300, options.signal)
-
-    if (options.signal?.aborted) {
-      return;
-    }
   }
 }

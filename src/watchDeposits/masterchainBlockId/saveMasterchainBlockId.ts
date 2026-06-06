@@ -24,7 +24,7 @@ export const saveMasterchainBlockId = async (payload: SaveMasterchainBlockIdPayl
     seqno: payload.blockId.seqno,
     shard: BigInt(payload.blockId.shard),
     workchain: payload.blockId.workchain,
-  })
+  }).onConflictDoNothing()
 
   log.info('save block')
 }
