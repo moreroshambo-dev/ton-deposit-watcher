@@ -1,0 +1,1 @@
+ALTER TABLE "deposits_tx" RENAME COLUMN "seqno" TO "masterchainSeqno";

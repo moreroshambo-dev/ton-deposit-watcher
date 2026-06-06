@@ -1,0 +1,1 @@
+ALTER TABLE "deposits_tx" ADD COLUMN "shardSeqno" bigint NOT NULL;

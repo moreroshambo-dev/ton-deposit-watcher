@@ -1,0 +1,350 @@
+{
+  "id": "30242572-50d5-4f76-b378-c0bdbc328484",
+  "prevId": "70e7549b-d0ec-4b99-bd0a-6c64bca2de07",
+  "version": "7",
+  "dialect": "postgresql",
+  "tables": {
+    "public.blockId": {
+      "name": "blockId",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "integer",
+          "primaryKey": true,
+          "notNull": true,
+          "identity": {
+            "type": "always",
+            "name": "blockId_id_seq",
+            "schema": "public",
+            "increment": "1",
+            "startWith": "1",
+            "minValue": "1",
+            "maxValue": "2147483647",
+            "cache": "1",
+            "cycle": false
+          }
+        },
+        "workchain": {
+          "name": "workchain",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "network": {
+          "name": "network",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "shard": {
+          "name": "shard",
+          "type": "bigint",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "seqno": {
+          "name": "seqno",
+          "type": "bigint",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "rootHash": {
+          "name": "rootHash",
+          "type": "varchar(128)",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "fileHash": {
+          "name": "fileHash",
+          "type": "varchar(128)",
+          "primaryKey": false,
+          "notNull": true
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {},
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {
+        "blockId_rootHash_unique": {
+          "name": "blockId_rootHash_unique",
+          "nullsNotDistinct": false,
+          "columns": [
+            "rootHash"
+          ]
+        },
+        "blockId_fileHash_unique": {
+          "name": "blockId_fileHash_unique",
+          "nullsNotDistinct": false,
+          "columns": [
+            "fileHash"
+          ]
+        },
+        "blockId_seqno_workchain": {
+          "name": "blockId_seqno_workchain",
+          "nullsNotDistinct": false,
+          "columns": [
+            "seqno",
+            "workchain"
+          ]
+        }
+      },
+      "policies": {},
+      "checkConstraints": {},
+      "isRLSEnabled": false
+    },
+    "public.deposits_tx": {
+      "name": "deposits_tx",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "integer",
+          "primaryKey": true,
+          "notNull": true,
+          "identity": {
+            "type": "byDefault",
+            "name": "deposits_tx_id_seq",
+            "schema": "public",
+            "increment": "1",
+            "startWith": "1",
+            "minValue": "1",
+            "maxValue": "2147483647",
+            "cache": "1",
+            "cycle": false
+          }
+        },
+        "hash": {
+          "name": "hash",
+          "type": "varchar(128)",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "amount": {
+          "name": "amount",
+          "type": "bigint",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "lt": {
+          "name": "lt",
+          "type": "bigint",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "from": {
+          "name": "from",
+          "type": "varchar(128)",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "to": {
+          "name": "to",
+          "type": "varchar(128)",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "memo": {
+          "name": "memo",
+          "type": "varchar(256)",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "now": {
+          "name": "now",
+          "type": "date",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "status": {
+          "name": "status",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "network": {
+          "name": "network",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "masterchainSeqno": {
+          "name": "masterchainSeqno",
+          "type": "bigint",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "shardWorkchain": {
+          "name": "shardWorkchain",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "shardSeqno": {
+          "name": "shardSeqno",
+          "type": "bigint",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "shard": {
+          "name": "shard",
+          "type": "bigint",
+          "primaryKey": false,
+          "notNull": false
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {},
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {
+        "deposits_tx_hash_unique": {
+          "name": "deposits_tx_hash_unique",
+          "nullsNotDistinct": false,
+          "columns": [
+            "hash"
+          ]
+        },
+        "deposits_tx_from_lt": {
+          "name": "deposits_tx_from_lt",
+          "nullsNotDistinct": false,
+          "columns": [
+            "from",
+            "lt"
+          ]
+        }
+      },
+      "policies": {},
+      "checkConstraints": {},
+      "isRLSEnabled": false
+    },
+    "public.downstream": {
+      "name": "downstream",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "integer",
+          "primaryKey": true,
+          "notNull": true,
+          "identity": {
+            "type": "byDefault",
+            "name": "downstream_id_seq",
+            "schema": "public",
+            "increment": "1",
+            "startWith": "1",
+            "minValue": "1",
+            "maxValue": "2147483647",
+            "cache": "1",
+            "cycle": false
+          }
+        },
+        "downstreamSlug": {
+          "name": "downstreamSlug",
+          "type": "varchar(32)",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "status": {
+          "name": "status",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "depositTxId": {
+          "name": "depositTxId",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "userId": {
+          "name": "userId",
+          "type": "varchar(64)",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "from": {
+          "name": "from",
+          "type": "varchar(128)",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "hash": {
+          "name": "hash",
+          "type": "varchar(128)",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "nanoTON": {
+          "name": "nanoTON",
+          "type": "bigint",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "creditedTokens": {
+          "name": "creditedTokens",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "default": 0
+        },
+        "txStatus": {
+          "name": "txStatus",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "network": {
+          "name": "network",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "initiatedAt": {
+          "name": "initiatedAt",
+          "type": "date",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        },
+        "downstreamHttpError": {
+          "name": "downstreamHttpError",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {
+        "depositTx_fk": {
+          "name": "depositTx_fk",
+          "tableFrom": "downstream",
+          "tableTo": "deposits_tx",
+          "columnsFrom": [
+            "depositTxId"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "policies": {},
+      "checkConstraints": {},
+      "isRLSEnabled": false
+    }
+  },
+  "enums": {},
+  "schemas": {},
+  "sequences": {},
+  "roles": {},
+  "policies": {},
+  "views": {},
+  "_meta": {
+    "columns": {},
+    "schemas": {},
+    "tables": {}
+  }
+}
