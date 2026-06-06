@@ -1,0 +1,1 @@
+ALTER TABLE "deposits_tx" ALTER COLUMN "shard" SET NOT NULL;
