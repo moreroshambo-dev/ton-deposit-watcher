@@ -10,7 +10,7 @@ export const processDownstream = async (options: GenericOptionsWithDb) => {
 
   for await (const update of iterateDownstreamUpdates({...options, logger: log})) {
     if (update.status !== 'queue') {
-        throw new Error()
+      throw new Error(`unexpected update status: ${update.status}`)
     }
 
     await options.db.transaction(async (dbTx) => {
