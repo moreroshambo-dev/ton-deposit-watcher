@@ -13,7 +13,9 @@ function nanoTonToCurrency(
 }
 
 export const depositEntityToUpdateEntity = (depositEntity: DepositTableSelect, options: GenericOptions): UpdateEntity | undefined => {
-  if (!depositEntity.memo) {
+  const userId = depositEntity.memo?.trim()
+
+  if (!userId) {
     return
   }
 
@@ -22,14 +24,14 @@ export const depositEntityToUpdateEntity = (depositEntity: DepositTableSelect, o
 
   return {
     depositTxId: depositEntity.id,
-    userId: depositEntity.memo.slice(0, 64),
+    userId: userId.slice(0, 64),
     from: depositEntity.from,
     hash: depositEntity.hash,
     nanoTON,
     txStatus: depositEntity.status,
     network: depositEntity.network,
     creditedTokens,
-    downstreamSlug: options.config.downstreamServices.slug,
+    downstreamSlug: options.config.downstreamService.slug,
   }
 }
 
@@ -51,7 +53,7 @@ export const addDownstreamUpdate = async (
     .map((update) => ({
       ...update,
       status: 'queue' as const,
-      downstreamSlug: options.config.downstreamServices.slug,
+      downstreamSlug: options.config.downstreamService.slug,
     }))
 
   if (updates.length < 1) {

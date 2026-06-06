@@ -8,19 +8,43 @@ const nonBlankStringSchema = z.string().refine((value) => value.trim().length > 
 
 const downstreamServiceSchema = z.object({
   baseUrl: z.string().url(),
-  cursorPath: z.string().min(1).startsWith("/"),
   privateKeyPem: nonBlankStringSchema,
   processTxPath: z.string().min(1).startsWith("/"),
   signatureHeader: nonBlankStringSchema,
   slug: nonBlankStringSchema,
-});
+}).passthrough();
 
 export type DownstreamServiceSchema = z.output<typeof downstreamServiceSchema>
+
+const downstreamServiceJsonSchema = z
+  .string()
+  .transform((value, ctx) => {
+    if (value.trim().length === 0) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        message: "DOWNSTREAM_SERVICES_JSON must be a non-blank JSON object",
+      });
+
+      return z.NEVER;
+    }
+
+    try {
+      return JSON.parse(value) as unknown;
+    } catch {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        message: "DOWNSTREAM_SERVICES_JSON must be valid JSON",
+      });
+
+      return z.NEVER;
+    }
+  })
+  .pipe(downstreamServiceSchema);
 
 const envSchema = z.object({
   TON_BATCH_SIZE: z.coerce.number().int().min(1).max(100).default(50),
   DATABASE_URL: z.string().min(1),
-  DOWNSTREAM_SERVICES_JSON: z.string().transform(s => JSON.parse(s)).pipe(downstreamServiceSchema),
+  DOWNSTREAM_SERVICES_JSON: downstreamServiceJsonSchema,
   TON_GLOBAL_CONFIG_URL: z.string().url().optional(),
   TON_NETWORK: networkSchema.default("ton"),
   TON_POLL_INTERVAL_MS: z.coerce.number().int().min(1000).default(5000),
@@ -45,7 +69,7 @@ export function loadConfig(env: NodeJS.ProcessEnv = process.env) {
     batchSize: parsed.TON_BATCH_SIZE,
     databaseConnectionInfo: describeDatabaseConnection(databaseUrl),
     databaseUrl,
-    downstreamServices: parsed.DOWNSTREAM_SERVICES_JSON,
+    downstreamService: parsed.DOWNSTREAM_SERVICES_JSON,
     globalConfigUrl: parsed.TON_GLOBAL_CONFIG_URL ?? defaultGlobalConfigUrl(network),
     network,
     pollIntervalMs: parsed.TON_POLL_INTERVAL_MS,

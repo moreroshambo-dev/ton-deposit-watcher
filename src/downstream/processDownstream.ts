@@ -13,36 +13,40 @@ export const processDownstream = async (options: GenericOptionsWithDb) => {
       throw new Error(`unexpected update status: ${update.status}`)
     }
 
-    await options.db.transaction(async (dbTx) => {
-      await setQueueStatus(
-        {status: 'sending', id: update.id},
-        {...options, logger: log, db: dbTx},
-      )
-      try {
-        await withRetry(
-          () => downstreamTxUpdate(
-            {update},
-            {...options, logger: log},
-          ),
-          {
-            logger: log,
-            op: 'downstreamTxUpdate'
-          }
-        ) 
-        await setQueueStatus(
-          {status: 'done', id: update.id},
-          {...options, logger: log, db: dbTx},
-        )  
-      } catch (error) {
-        if (error instanceof DownstreamHttpError) {
-          await setQueueStatus(
-            {status: 'error', id: update.id, downstreamHttpError: error.message},
-            {...options, logger: log, db: dbTx},
-          )  
-        } else {
-          throw error
+    await setQueueStatus(
+      {status: 'sending', id: update.id},
+      {...options, logger: log},
+    )
+
+    try {
+      await withRetry(
+        () => downstreamTxUpdate(
+          {update},
+          {...options, logger: log},
+        ),
+        {
+          logger: log,
+          op: 'downstreamTxUpdate'
         }
+      )
+      await setQueueStatus(
+        {status: 'done', id: update.id},
+        {...options, logger: log},
+      )
+    } catch (error) {
+      if (error instanceof DownstreamHttpError) {
+        await setQueueStatus(
+          {status: 'error', id: update.id, downstreamHttpError: error.message},
+          {...options, logger: log},
+        )
+      } else {
+        await setQueueStatus(
+          {status: 'error', id: update.id, downstreamHttpError: 'unknown error'},
+          {...options, logger: log},
+        )
+
+        throw error
       }
-    })
+    }
   }
 }

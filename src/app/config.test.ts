@@ -9,6 +9,14 @@ const baseEnv = {
   TON_WALLET_ADDRESS: "UQDI1erifGghML1AH1ZhlVD8wV-j-sOk0w8yltj5lRwkS0Pv",
 };
 
+const downstreamService = {
+  baseUrl: "https://billing.example.com",
+  privateKeyPem: "-----BEGIN PRIVATE KEY-----\\n...\\n-----END PRIVATE KEY-----",
+  processTxPath: "/private-api/deposit/process-tx",
+  signatureHeader: "x-deposit-signature",
+  slug: "billing",
+};
+
 function loadTestConfig(env: Record<string, string | undefined> = {}) {
   return loadConfig({
     ...baseEnv,
@@ -16,68 +24,41 @@ function loadTestConfig(env: Record<string, string | undefined> = {}) {
   });
 }
 
-describe("loadConfig downstream services", () => {
-  test("uses an empty downstream service list when env is absent", () => {
-    expect(loadTestConfig().downstreamServices).toEqual([]);
+describe("loadConfig downstream service", () => {
+  test("parses a single downstream service object from DOWNSTREAM_SERVICES_JSON", () => {
+    expect(
+      loadTestConfig({
+        DOWNSTREAM_SERVICES_JSON: JSON.stringify(downstreamService),
+      }).downstreamService,
+    ).toEqual(downstreamService);
   });
 
-  test("uses an empty downstream service list when env is blank", () => {
-    expect(loadTestConfig({ DOWNSTREAM_SERVICES_JSON: "   " }).downstreamServices).toEqual([]);
-  });
-
-  test("uses an empty downstream service list when env is an empty array", () => {
-    expect(loadTestConfig({ DOWNSTREAM_SERVICES_JSON: "[]" }).downstreamServices).toEqual([]);
-  });
-
-  test("parses one or more downstream services from JSON", () => {
-    const downstreamServices = [
-      {
-        baseUrl: "https://billing.example.com",
-        cursorPath: "/private-api/deposit/cursor",
-        privateKeyPem: "-----BEGIN PRIVATE KEY-----\\n...\\n-----END PRIVATE KEY-----",
-        processTxPath: "/private-api/deposit/process-tx",
-        signatureHeader: "x-deposit-signature",
-        slug: "billing",
-      },
-      {
-        baseUrl: "https://ledger.example.com",
-        cursorPath: "/cursor",
-        privateKeyPem: "key",
-        processTxPath: "/process-tx",
-        signatureHeader: "x-ledger-signature",
-        slug: "ledger",
-      },
-    ];
+  test("allows legacy cursorPath as an extra field", () => {
+    const downstreamServiceWithCursorPath = {
+      ...downstreamService,
+      cursorPath: "/private-api/deposit/cursor",
+    };
 
     expect(
       loadTestConfig({
-        DOWNSTREAM_SERVICES_JSON: JSON.stringify(downstreamServices),
-      }).downstreamServices,
-    ).toEqual(downstreamServices);
+        DOWNSTREAM_SERVICES_JSON: JSON.stringify(downstreamServiceWithCursorPath),
+      }).downstreamService,
+    ).toEqual(downstreamServiceWithCursorPath);
   });
 
-  test("rejects duplicate downstream service slugs", () => {
+  test("rejects absent downstream service JSON", () => {
+    expect(() => loadTestConfig()).toThrow(ZodError);
+  });
+
+  test("rejects blank downstream service JSON", () => {
     expect(() =>
-      loadTestConfig({
-        DOWNSTREAM_SERVICES_JSON: JSON.stringify([
-          {
-            baseUrl: "https://billing.example.com",
-            cursorPath: "/cursor",
-            privateKeyPem: "key",
-            processTxPath: "/process",
-            signatureHeader: "x-signature",
-            slug: "billing",
-          },
-          {
-            baseUrl: "https://other.example.com",
-            cursorPath: "/cursor",
-            privateKeyPem: "key",
-            processTxPath: "/process",
-            signatureHeader: "x-signature",
-            slug: "billing",
-          },
-        ]),
-      }),
+      loadTestConfig({ DOWNSTREAM_SERVICES_JSON: "   " }),
+    ).toThrow(ZodError);
+  });
+
+  test("rejects array downstream service JSON", () => {
+    expect(() =>
+      loadTestConfig({ DOWNSTREAM_SERVICES_JSON: "[]" }),
     ).toThrow(ZodError);
   });
 
@@ -89,45 +70,37 @@ describe("loadConfig downstream services", () => {
     ).toThrow(ZodError);
   });
 
-  test("rejects non-array downstream service JSON", () => {
+  test("rejects missing required downstream service fields", () => {
     expect(() =>
       loadTestConfig({
         DOWNSTREAM_SERVICES_JSON: JSON.stringify({
+          baseUrl: "https://billing.example.com",
+          privateKeyPem: "key",
+          signatureHeader: "x-signature",
           slug: "billing",
         }),
       }),
     ).toThrow(ZodError);
   });
 
-  test("rejects missing required downstream service fields", () => {
+  test("rejects invalid downstream service URL", () => {
     expect(() =>
       loadTestConfig({
-        DOWNSTREAM_SERVICES_JSON: JSON.stringify([
-          {
-            baseUrl: "https://billing.example.com",
-            cursorPath: "/cursor",
-            privateKeyPem: "key",
-            signatureHeader: "x-signature",
-            slug: "billing",
-          },
-        ]),
+        DOWNSTREAM_SERVICES_JSON: JSON.stringify({
+          ...downstreamService,
+          baseUrl: "not-a-url",
+        }),
       }),
     ).toThrow(ZodError);
   });
 
-  test("rejects downstream service paths without leading slash", () => {
+  test("rejects downstream process path without leading slash", () => {
     expect(() =>
       loadTestConfig({
-        DOWNSTREAM_SERVICES_JSON: JSON.stringify([
-          {
-            baseUrl: "https://billing.example.com",
-            cursorPath: "cursor",
-            privateKeyPem: "key",
-            processTxPath: "/process",
-            signatureHeader: "x-signature",
-            slug: "billing",
-          },
-        ]),
+        DOWNSTREAM_SERVICES_JSON: JSON.stringify({
+          ...downstreamService,
+          processTxPath: "process",
+        }),
       }),
     ).toThrow(ZodError);
   });

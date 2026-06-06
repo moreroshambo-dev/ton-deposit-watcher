@@ -6,6 +6,7 @@ import { MasterchainBlockId } from './types';
 
 type WatchMasterchainBlockIdsOptions = {
   logger: Logger;
+  pollIntervalMs: number;
   signal?: AbortSignal;
 };
 
@@ -82,6 +83,6 @@ export async function* watchMasterchainBlockIds(
       lastBlockId = mc.last
     }
 
-    await sleep(300, options.signal)
+    await sleep(options.pollIntervalMs, options.signal)
   }
 }

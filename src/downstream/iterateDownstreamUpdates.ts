@@ -27,14 +27,14 @@ export async function* iterateDownstreamUpdates(options: GenericOptionsWithDb) {
       .where(
         and(
           eq(downstreamQueueTable.status, 'queue'),
-          eq(downstreamQueueTable.downstreamSlug, options.config.downstreamServices.slug),
+          eq(downstreamQueueTable.downstreamSlug, options.config.downstreamService.slug),
         )
       )
       .orderBy(asc(downstreamQueueTable.id))
       .limit(1)
   
     if (queryResult.length < 1) {
-      await sleep(5000)
+      await sleep(500)
     } else {
       yield queryResult[0]
     }

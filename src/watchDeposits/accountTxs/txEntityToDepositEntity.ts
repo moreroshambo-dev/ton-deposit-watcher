@@ -95,7 +95,7 @@ export function txEntityToDepositEntity(payload: TxEntityToDepositEntityPayload)
     masterchainSeqno: payload.masterchainBlockId.seqno,
     shardWorkchain: payload.txShardBlockId.workchain,
     shardRootHash: payload.txShardBlockId.rootHash.toHex(),
-    shardFileHash: payload.txShardBlockId.rootHash.toHex(),
+    shardFileHash: payload.txShardBlockId.fileHash.toHex(),
     shardSeqno: payload.txShardBlockId.seqno,
     shard: BigInt(payload.txShardBlockId.shard),
   };

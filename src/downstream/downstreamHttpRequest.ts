@@ -6,9 +6,9 @@ export function signMessage(
   options: GenericOptions,
 ): string {
   const normalizedPrivateKey =
-    typeof options.config.downstreamServices.privateKeyPem === "string"
-      ? options.config.downstreamServices.privateKeyPem.replace(/\\n/g, "\n")
-      : options.config.downstreamServices.privateKeyPem;
+    typeof options.config.downstreamService.privateKeyPem === "string"
+      ? options.config.downstreamService.privateKeyPem.replace(/\\n/g, "\n")
+      : options.config.downstreamService.privateKeyPem;
 
   const signature = crypto.sign(
     null,
@@ -58,13 +58,13 @@ export const downstreamHttpRequest = async (payload: HttpRequestPayload, options
   const log = options.logger.child({fn: 'httpRequest'})
   const body = JSON.stringify(payload, (key, value) => typeof value === 'bigint' ? value.toString() : value)
   const signature = signMessage(body, {...options, logger: log});
-  const url = options.config.downstreamServices.baseUrl + options.config.downstreamServices.processTxPath;
+  const url = new URL(options.config.downstreamService.processTxPath, options.config.downstreamService.baseUrl);
 
   const response = await fetch(url, {
     body,
     headers: {
       "content-type": "application/json",
-      [options.config.downstreamServices.signatureHeader]: signature,
+      [options.config.downstreamService.signatureHeader]: signature,
     },
     method: "POST",
     signal: AbortSignal.timeout(REQUEST_TIMEOUT_MS),

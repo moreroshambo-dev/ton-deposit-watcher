@@ -10,12 +10,18 @@ import { txEntityToDepositEntity } from "./accountTxs/txEntityToDepositEntity";
 import { saveDepositTx } from "./accountTxs/saveDeposit";
 import { addDownstreamUpdate } from "../downstream/addDownstreamUpdate";
 import { GenericOptionsWithDb } from "~/domain/fn/types";
+import type { Transaction } from "@ton/core";
+import type { BlockID } from "ton-lite-client";
 
 export async function watchDeposits(options: GenericOptionsWithDb) {
   const log = options.logger.child({fn: 'watchDeposits'})
   const {client} = await createTonLiteClient({...options, logger: log})
 
-  for await (const masterchainBlockId of watchMasterchainBlockIds(client, {...options, logger: log})) {
+  for await (const masterchainBlockId of watchMasterchainBlockIds(client, {
+    ...options,
+    logger: log,
+    pollIntervalMs: options.config.pollIntervalMs,
+  })) {
     const accountState = await getBlockchainAccountState(
       client,
       {blockId: masterchainBlockId},
@@ -33,7 +39,9 @@ export async function watchDeposits(options: GenericOptionsWithDb) {
       options.config.address
     ) : undefined
 
-    for await (let {tx: blockChainTx, blockId: txShardBlockId} of iterateAccountTransactions(
+    const accountTxs: Array<{tx: Transaction, blockId: BlockID}> = []
+
+    for await (const accountTx of iterateAccountTransactions(
       client,
       {
         from: lastTxCursor,
@@ -42,9 +50,13 @@ export async function watchDeposits(options: GenericOptionsWithDb) {
       {
         ...options,
         logger: log,
-        batchSize: 1,
+        batchSize: options.config.batchSize,
       }
     )) {
+      accountTxs.push(accountTx)
+    }
+
+    for (const {tx: blockChainTx, blockId: txShardBlockId} of accountTxs.reverse()) {
       const deposit = txEntityToDepositEntity({tx: blockChainTx, txShardBlockId, masterchainBlockId, depositAddress: options.config.address})
     
       if (deposit) {
