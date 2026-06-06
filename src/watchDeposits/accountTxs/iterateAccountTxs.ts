@@ -46,8 +46,15 @@ export async function* iterateAccountTransactions(
     throw new Error('batchSize must be a positive integer');
   }
 
-  if (payload.to && payload.from.lt <= payload.to.lt) {
-    throw new Error('from.lt must be greater than to.lt');
+  if (payload.to) {
+    if (payload.from.lt == payload.to.lt) {
+      // нет новых транзакций
+      return;
+    }
+
+    if (payload.from.lt <= payload.to.lt) {
+      throw new Error(`from.lt (${payload.from.lt.toString()}) must be greater than to.lt (${payload.to.lt.toString()})`);
+    }
   }
 
   let txCursor: ParserCursor = payload.from
