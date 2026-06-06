@@ -1,13 +1,11 @@
 import { Cell, loadTransaction, Transaction } from '@ton/core';
-import { Logger } from 'pino';
 import type { BlockID, LiteClient } from 'ton-lite-client';
 import { withRetry } from '~/shared/utils/withRetry';
 import { createParserCursorByTx, ParserCursor } from './createParserCursorByTx';
 import { bufferToBigInt } from '~/shared/utils/bufferToBigInt';
+import { GenericOptions } from '~/domain/fn/types';
 
-type IterateAccountTransactionsOptions = {
-  logger: Logger,
-  signal?: AbortSignal
+type IterateAccountTransactionsOptions = GenericOptions & {
   /**
    * Размер пачки транзакций за один запрос.
    */

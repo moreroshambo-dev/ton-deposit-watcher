@@ -46,8 +46,10 @@ export type TonDeposit = {
   tx: Transaction;
   now: number
   masterchainSeqno: number
-  shardSeqno: number
   shardWorkchain: number,
+  shardRootHash: string,
+  shardFileHash: string,
+  shardSeqno: number
   shard: bigint
 };
 
@@ -91,8 +93,10 @@ export function txEntityToDepositEntity(payload: TxEntityToDepositEntityPayload)
     now: payload.tx.now,
     tx: payload.tx,
     masterchainSeqno: payload.masterchainBlockId.seqno,
-    shardSeqno: payload.txShardBlockId.seqno,
     shardWorkchain: payload.txShardBlockId.workchain,
+    shardRootHash: payload.txShardBlockId.rootHash.toHex(),
+    shardFileHash: payload.txShardBlockId.rootHash.toHex(),
+    shardSeqno: payload.txShardBlockId.seqno,
     shard: BigInt(payload.txShardBlockId.shard),
   };
 }

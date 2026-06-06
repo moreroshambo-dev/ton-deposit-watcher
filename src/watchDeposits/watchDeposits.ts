@@ -4,7 +4,7 @@ import { createParserCursorByTx } from "./accountTxs/createParserCursorByTx";
 import { iterateAccountTransactions } from "./accountTxs/iterateAccountTxs";
 import { getBlockchainAccountState } from "./getBlockchainAccountState";
 import { loadLastDepositFromDb } from "./loadLastDepositFromDb";
-import { updateDepositStatus } from "./updateDepositStatus";
+import { updateDepositStatus } from "./updateDepositStatus/updateDepositStatus";
 import { saveMasterchainBlockId } from "./masterchainBlockId/saveMasterchainBlockId";
 import { txEntityToDepositEntity } from "./accountTxs/txEntityToDepositEntity";
 import { saveDepositTx } from "./accountTxs/saveDeposit";
@@ -61,9 +61,6 @@ export async function watchDeposits(options: GenericOptionsWithDb) {
     }
 
     await saveMasterchainBlockId({blockId: masterchainBlockId}, {...options, logger: log})
-
-    await updateDepositStatus({
-      workchain: masterchainBlockId.workchain,
-    }, {...options, logger: log})
+    await updateDepositStatus(client, {...options, logger: log})
   }
 }
