@@ -48,6 +48,8 @@ export const saveDepositTx = async (payload: SaveDepositTxPayload, options: Gene
         now: new Date(payload.depositTx.tx.now * 1000),
         masterchainSeqno: payload.depositTx.masterchainSeqno,
         shardWorkchain: payload.depositTx.shardWorkchain,
+        shardFileHash: payload.depositTx.shardFileHash,
+        shardRootHash: payload.depositTx.shardRootHash,
         shardSeqno: payload.depositTx.shardSeqno,
         shard: payload.depositTx.shard,
       })
