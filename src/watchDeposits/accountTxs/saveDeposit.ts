@@ -14,6 +14,7 @@ export const saveDepositTx = async (payload: SaveDepositTxPayload, options: Gene
     lt: payload.depositTx.lt,
     now: payload.depositTx.now,
     memo: payload.depositTx.memo,
+    masterchainSeqno: payload.depositTx.masterchainSeqno
   })
 
   const [existed] = await options.db.select().from(depositTable).where(
@@ -32,7 +33,6 @@ export const saveDepositTx = async (payload: SaveDepositTxPayload, options: Gene
 
   if (existed) {
     log.error('DUPLICATE TRANSACTION')
-
   } else {
     const rows = await options.db
       .insert(depositTable)
@@ -46,8 +46,9 @@ export const saveDepositTx = async (payload: SaveDepositTxPayload, options: Gene
         memo: payload.depositTx.memo,
         to: payload.depositTx.to.toRawString(),
         now: new Date(payload.depositTx.tx.now * 1000),
-        seqno: payload.depositTx.seqno,
-        workchain: payload.depositTx.workchain,
+        masterchainSeqno: payload.depositTx.masterchainSeqno,
+        shardWorkchain: payload.depositTx.shardWorkchain,
+        shardSeqno: payload.depositTx.shardSeqno,
         shard: payload.depositTx.shard,
       })
       .returning();

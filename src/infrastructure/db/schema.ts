@@ -37,10 +37,10 @@ export const depositTable = pgTable(
     memo: varchar({length: 256}),
     now: date({mode: 'date'}).notNull(),
     status: text({enum: ['pending', 'confirmed', 'canceled']}).notNull(),
-    
     network: text({enum: ['ton', 'ton-testnet']}).notNull(),
-    seqno: bigint({mode: 'number'}).notNull(),
-    workchain: integer().notNull(),
+    masterchainSeqno: bigint({mode: 'number'}).notNull(),
+    shardWorkchain: integer().notNull(),
+    shardSeqno: bigint({mode: 'number'}).notNull(),
     shard: bigint({mode: 'bigint'}),
   },
   (table) => [

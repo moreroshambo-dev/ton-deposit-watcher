@@ -15,10 +15,10 @@ export async function watchDeposits(options: GenericOptionsWithDb) {
   const log = options.logger.child({fn: 'watchDeposits'})
   const {client} = await createTonLiteClient({...options, logger: log})
 
-  for await (const lastBlockId of watchMasterchainBlockIds(client, {...options, logger: log})) {
+  for await (const masterchainBlockId of watchMasterchainBlockIds(client, {...options, logger: log})) {
     const accountState = await getBlockchainAccountState(
       client,
-      {blockId: lastBlockId},
+      {blockId: masterchainBlockId},
       {...options, logger: log},
     )
 
@@ -33,7 +33,7 @@ export async function watchDeposits(options: GenericOptionsWithDb) {
       options.config.address
     ) : undefined
 
-    for await (let {tx: blockChainTx} of iterateAccountTransactions(
+    for await (let {tx: blockChainTx, blockId: txShardBlockId} of iterateAccountTransactions(
       client,
       {
         from: lastTxCursor,
@@ -45,7 +45,7 @@ export async function watchDeposits(options: GenericOptionsWithDb) {
         batchSize: 1,
       }
     )) {
-      const deposit = txEntityToDepositEntity({tx: blockChainTx, blockId: lastBlockId, depositAddress: options.config.address})
+      const deposit = txEntityToDepositEntity({tx: blockChainTx, txShardBlockId, masterchainBlockId, depositAddress: options.config.address})
     
       if (deposit) {
         await options.db.transaction(async (dbTx) => {
@@ -60,10 +60,10 @@ export async function watchDeposits(options: GenericOptionsWithDb) {
       }
     }
 
-    await saveMasterchainBlockId({blockId: lastBlockId}, {...options, logger: log})
+    await saveMasterchainBlockId({blockId: masterchainBlockId}, {...options, logger: log})
 
     await updateDepositStatus({
-      workchain: lastBlockId.workchain,
+      workchain: masterchainBlockId.workchain,
     }, {...options, logger: log})
   }
 }

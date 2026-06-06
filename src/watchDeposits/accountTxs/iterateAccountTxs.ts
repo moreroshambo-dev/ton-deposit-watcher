@@ -38,7 +38,7 @@ export async function* iterateAccountTransactions(
   client: LiteClient,
   payload: IterateAccountTransactionsPayload,
   options: IterateAccountTransactionsOptions,
-): AsyncGenerator<{tx: Transaction}> {
+): AsyncGenerator<{tx: Transaction, blockId: BlockID}> {
   const log = options.logger.child({
     fn: 'iterateAccountTransactions'
   })
@@ -94,7 +94,7 @@ export async function* iterateAccountTransactions(
 
       log.info('new tx: %s; tx-now=%s', bufferToBigInt(tx.hash()).toString(16), new Date(tx.now * 1000).toLocaleString())
 
-      yield {tx}
+      yield {tx, blockId: page.ids[cellIndex]}
     }
 
     if (

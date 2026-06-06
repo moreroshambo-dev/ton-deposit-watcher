@@ -45,14 +45,16 @@ export type TonDeposit = {
   memo: string | null;
   tx: Transaction;
   now: number
-  seqno: number
-  workchain: number
+  masterchainSeqno: number
+  shardSeqno: number
+  shardWorkchain: number,
   shard: bigint
 };
 
 type TxEntityToDepositEntityPayload = {
   tx: Transaction,
-  blockId: BlockID,
+  txShardBlockId: BlockID,
+  masterchainBlockId: BlockID,
   depositAddress: Address,
 }
 
@@ -88,8 +90,9 @@ export function txEntityToDepositEntity(payload: TxEntityToDepositEntityPayload)
     memo: parseTonTextMemo(payload.tx),
     now: payload.tx.now,
     tx: payload.tx,
-    seqno: payload.blockId.seqno,
-    workchain: payload.blockId.workchain,
-    shard: BigInt(payload.blockId.shard),
+    masterchainSeqno: payload.masterchainBlockId.seqno,
+    shardSeqno: payload.txShardBlockId.seqno,
+    shardWorkchain: payload.txShardBlockId.workchain,
+    shard: BigInt(payload.txShardBlockId.shard),
   };
 }

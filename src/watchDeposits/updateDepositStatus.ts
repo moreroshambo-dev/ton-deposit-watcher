@@ -41,7 +41,7 @@ export const updateDepositStatus = async (payload: UpdateDepositStatusPayload, o
     .from(depositTable)
     .where(
       and(
-        lte(depositTable.seqno, lastBlock.seqno - 60),
+        lte(depositTable.masterchainSeqno, lastBlock.seqno - 60),
         eq(depositTable.status, 'pending'),
         eq(depositTable.to, options.config.address.toRawString())
       )
