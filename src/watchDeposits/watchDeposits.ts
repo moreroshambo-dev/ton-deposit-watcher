@@ -33,7 +33,7 @@ export async function watchDeposits(options: GenericOptionsWithDb) {
       options.config.address
     ) : undefined
 
-    for await (let {tx: blockChainTx, blockId} of iterateAccountTransactions(
+    for await (let {tx: blockChainTx} of iterateAccountTransactions(
       client,
       {
         from: lastTxCursor,
@@ -45,7 +45,7 @@ export async function watchDeposits(options: GenericOptionsWithDb) {
         batchSize: 1,
       }
     )) {
-      const deposit = txEntityToDepositEntity({tx: blockChainTx, blockId, depositAddress: options.config.address})
+      const deposit = txEntityToDepositEntity({tx: blockChainTx, blockId: lastBlockId, depositAddress: options.config.address})
     
       if (deposit) {
         await options.db.transaction(async (dbTx) => {

@@ -38,7 +38,7 @@ export async function* iterateAccountTransactions(
   client: LiteClient,
   payload: IterateAccountTransactionsPayload,
   options: IterateAccountTransactionsOptions,
-): AsyncGenerator<{tx: Transaction, blockId: BlockID}> {
+): AsyncGenerator<{tx: Transaction}> {
   const log = options.logger.child({
     fn: 'iterateAccountTransactions'
   })
@@ -48,10 +48,14 @@ export async function* iterateAccountTransactions(
     throw new Error('batchSize must be a positive integer');
   }
 
+  if (payload.to && payload.from.lt <= payload.to.lt) {
+    throw new Error('from.lt must be greater than to.lt');
+  }
+
   let txCursor: ParserCursor = payload.from
 
   while (!options.signal?.aborted) {
-    let oldestTx: Transaction | null = null;
+    let lastTxInPage: Transaction | null = null;
 
     const page = await withRetry(
       () => client.getAccountTransactions(
@@ -86,24 +90,24 @@ export async function* iterateAccountTransactions(
         return;
       }
 
-      oldestTx = tx
+      lastTxInPage = tx
 
       log.info('new tx: %s; tx-now=%s', bufferToBigInt(tx.hash()).toString(16), new Date(tx.now * 1000).toLocaleString())
 
-      yield {tx, blockId: page.ids[cellIndex]}
+      yield {tx}
     }
 
     if (
-      !oldestTx ||
-      oldestTx.prevTransactionLt === 0n
+      !lastTxInPage ||
+      lastTxInPage.prevTransactionLt === 0n
     ) {
       return;
     }
 
     txCursor = createParserCursorByTx(
       {
-        lt: oldestTx.prevTransactionLt,
-        hash: oldestTx.prevTransactionHash,
+        lt: lastTxInPage.prevTransactionLt,
+        hash: lastTxInPage.prevTransactionHash,
       },
       txCursor.address,
     )
