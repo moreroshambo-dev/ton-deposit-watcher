@@ -40,10 +40,6 @@ export const processDownstream = async (options: GenericOptionsWithDb) => {
         {status: 'error', id: update.id, downstreamHttpError},
         {...options, logger: log},
       )
-
-      if (!(error instanceof DownstreamHttpError)) {
-        throw error
-      }
     }
   }
 }
