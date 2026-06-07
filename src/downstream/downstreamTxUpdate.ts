@@ -10,8 +10,8 @@ export const downstreamTxUpdate = async (payload: SendMessagePayload, options: G
   const log = options.logger.child({fn: 'downstreamTxUpdate'})
 
   await downstreamHttpRequest({
+    updateId: payload.update.id,
     slug: payload.update.downstreamSlug,
-    depositTxId: payload.update.depositTxId,
     userId: payload.update.userId,
     hash: payload.update.hash,
     txStatus: payload.update.txStatus,
