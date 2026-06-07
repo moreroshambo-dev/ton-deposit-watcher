@@ -3,7 +3,6 @@ import { downstreamTxUpdate } from "~/downstream/downstreamTxUpdate";
 import { withRetry } from "~/shared/utils/withRetry";
 import { setQueueStatus } from "~/downstream/setQueueStatus";
 import { GenericOptionsWithDb } from "~/domain/fn/types";
-import { DownstreamHttpError } from "./downstreamHttpRequest";
 
 export const processDownstream = async (options: GenericOptionsWithDb) => {
   const log = options.logger.child({fn: 'processDownstream'})
