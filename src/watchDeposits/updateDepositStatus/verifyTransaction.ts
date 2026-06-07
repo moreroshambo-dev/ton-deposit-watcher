@@ -51,6 +51,7 @@ export const verifyTransaction = async (
     }
   
     const actualHash = tx.hash().toString('hex');
+
     if (actualHash !== payload.hash) {
       log.warn('hash mismatch: expected %s, got %s', payload.hash, actualHash);
       return false;
@@ -61,16 +62,11 @@ export const verifyTransaction = async (
       return false;
     }
   
-    if (tx.description.computePhase.type !== 'vm') {
-      log.warn('unexpected compute phase type');
-      return false;
-    }
-  
-    if (!tx.description.computePhase.success) {
+    if (tx.description.computePhase.type === 'vm' && !tx.description.computePhase.success) {
       log.warn('compute phase failed');
       return false;
     }
-  
+
     if (tx.description.actionPhase && !tx.description.actionPhase.success) {
       log.warn('action phase failed');
       return false;
