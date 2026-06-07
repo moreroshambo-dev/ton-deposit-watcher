@@ -6,6 +6,12 @@ import { verifyTransaction } from "./verifyTransaction";
 import { Address } from "@ton/core";
 import { LiteClient } from "ton-lite-client";
 
+// Верифицируем только депозиты которые были найдены недавно.
+// Lite-серверы хранят не всю историю блоков, поэтому getAccountTransaction
+// для старых блоков вернёт "block handle not in db".
+// Депозиты старше VERIFICATION_BLOCK_WINDOW блоков считаем достоверными —
+// они уже прошли базовую проверку при первом сохранении.
+const VERIFICATION_BLOCK_WINDOW = 1000;
 const MASTERCHAIN_WORKCHAIN = -1
 
 export const updateDepositStatus = async (client: LiteClient, options: GenericOptionsWithDb) => {

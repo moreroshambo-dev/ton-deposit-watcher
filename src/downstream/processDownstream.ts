@@ -34,17 +34,14 @@ export const processDownstream = async (options: GenericOptionsWithDb) => {
         {...options, logger: log},
       )
     } catch (error) {
-      if (error instanceof DownstreamHttpError) {
-        await setQueueStatus(
-          {status: 'error', id: update.id, downstreamHttpError: error.message},
-          {...options, logger: log},
-        )
-      } else {
-        await setQueueStatus(
-          {status: 'error', id: update.id, downstreamHttpError: 'unknown error'},
-          {...options, logger: log},
-        )
+      const downstreamHttpError = error instanceof Error ? error.message : 'unknown error';
+  
+      await setQueueStatus(
+        {status: 'error', id: update.id, downstreamHttpError},
+        {...options, logger: log},
+      )
 
+      if (!(error instanceof DownstreamHttpError)) {
         throw error
       }
     }

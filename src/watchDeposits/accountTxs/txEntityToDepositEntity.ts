@@ -60,6 +60,34 @@ type TxEntityToDepositEntityPayload = {
   depositAddress: Address,
 }
 
+/**
+ * Преобразует TON-транзакцию в депозит, если она удовлетворяет всем условиям.
+ *
+ * Функция проверяет транзакцию по следующим критериям (при несоответствии возвращает `null`):
+ *
+ * - Транзакция имеет входящее сообщение
+ * - Входящее сообщение внутреннее (`internal`), не bounced
+ * - Сумма перевода больше нуля
+ * - Получатель совпадает с `depositAddress`
+ * - Тип транзакции — `generic`
+ * - `computePhase` завершилась успешно (тип `vm`, `success: true`)
+ * - `actionPhase` завершилась успешно (если присутствует)
+ *
+ * Последние два условия защищают от сохранения failed-транзакций,
+ * которые могли быть отправлены злоумышленником намеренно —
+ * например, отменённый или заведомо failing перевод.
+ *
+ * @param payload.tx - Транзакция полученная из блокчейна.
+ * @param payload.txShardBlockId - Шардовый блок в котором находится транзакция.
+ *   Используется для последующей верификации через `getAccountTransaction`.
+ * @param payload.masterchainBlockId - Masterchain-блок на момент обнаружения транзакции.
+ *   `seqno` используется для отслеживания подтверждений — депозит считается
+ *   подтверждённым когда текущий masterchain seqno превысит этот на N блоков.
+ * @param payload.depositAddress - Адрес депозитного кошелька.
+ *   Транзакции на другие адреса отбрасываются.
+ *
+ * @returns `TonDeposit` если транзакция является валидным депозитом, иначе `null`.
+ */
 export function txEntityToDepositEntity(payload: TxEntityToDepositEntityPayload): TonDeposit | null {
   const msg = payload.tx.inMessage;
 
@@ -80,6 +108,20 @@ export function txEntityToDepositEntity(payload: TxEntityToDepositEntityPayload)
   }
 
   if (!msg.info.dest.equals(payload.depositAddress)) {
+    return null;
+  }
+
+  if (payload.tx.description.type !== 'generic') {
+    return null;
+  }
+
+  const { computePhase, actionPhase } = payload.tx.description;
+
+  if (computePhase.type !== 'vm' || !computePhase.success) {
+    return null;
+  }
+
+  if (actionPhase && !actionPhase.success) {
     return null;
   }
 
