@@ -70,12 +70,11 @@ type TxEntityToDepositEntityPayload = {
  * - Сумма перевода больше нуля
  * - Получатель совпадает с `depositAddress`
  * - Тип транзакции — `generic`
- * - `computePhase` завершилась успешно (тип `vm`, `success: true`)
+ * - `computePhase` не завершилась с ошибкой:
+ *   - тип `skipped` допустим — возникает когда аккаунт не инициализирован,
+ *     деньги при этом всё равно зачисляются
+ *   - тип `vm` с `success: false` означает реально failed транзакцию — отбрасываем
  * - `actionPhase` завершилась успешно (если присутствует)
- *
- * Последние два условия защищают от сохранения failed-транзакций,
- * которые могли быть отправлены злоумышленником намеренно —
- * например, отменённый или заведомо failing перевод.
  *
  * @param payload.tx - Транзакция полученная из блокчейна.
  * @param payload.txShardBlockId - Шардовый блок в котором находится транзакция.
@@ -117,7 +116,10 @@ export function txEntityToDepositEntity(payload: TxEntityToDepositEntityPayload)
 
   const { computePhase, actionPhase } = payload.tx.description;
 
-  if (computePhase.type !== 'vm' || !computePhase.success) {
+  // computePhase может быть skipped если аккаунт не инициализирован —
+  // это нормально для депозитного кошелька, деньги всё равно зачислились.
+  // Но если фаза выполнилась (vm) и упала — транзакция невалидна.
+  if (computePhase.type === 'vm' && !computePhase.success) {
     return null;
   }
 
